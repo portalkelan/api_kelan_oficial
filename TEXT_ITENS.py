@@ -1,54 +1,94 @@
-import mysql.connector
+import requests
 import json
+import mysql.connector
+import time
+import pegar_data_hora
 
-# Função para extrair 'id' e 'title' do JSON
-def extract_id_and_title(json_data):
-    data = json.loads(json_data)
-    item_id = data['itemData']['id']
-    item_title = data['itemData']['title']
-    return item_id, item_title
-
-# Conectar ao banco de dados MySQL
-conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="",
-    database="kelan"
-)
-
-# Cria um cursor para executar consultas SQL
-cursor = conn.cursor()
-
-# JSON obtido (exemplo)
-json_data = '''
-{
-    "itemData": {
-        "id": "MLB1093239349",
-        "title": "Cabideiro Prateleira Araras Roupas 60x20x25 Cm Mdf Branco"
-    }
+# Database configuration
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'database': 'kelan'
 }
-'''
 
-# Extrair 'id' e 'title' do JSON
-item_id, item_title = extract_id_and_title(json_data)
+# Function to establish a database connection
+def create_db_connection():
+    return mysql.connector.connect(**db_config)
 
-# Consulta para verificar se o valor 'id' já existe na tabela 'respostas'
-query = "SELECT id_item FROM respostas WHERE id_item = %s"
-cursor.execute(query, (item_id,))
+# Function to close a database connection
+def close_db_connection(conn, cursor):
+    cursor.close()
+    conn.close()
 
-# Verificar se o valor já existe no banco
-if cursor.fetchone() is not None:
-    # Se o valor 'id' já existe, atualizar a coluna 'title_item'
-    update_query = "UPDATE respostas SET title_item = %s WHERE id_item = %s"
-    cursor.execute(update_query, (item_title, item_id))
-else:
-    # Se o valor 'id' não existe, inserir na tabela 'respostas'
-    insert_query = "INSERT INTO respostas (id_item, title_item) VALUES (%s, %s)"
-    cursor.execute(insert_query, (item_id, item_title))
+# Function to create a table if it doesn't exist
+def create_table_if_not_exists(conn, cursor, create_table_query):
+    cursor.execute(create_table_query)
+    conn.commit()
 
-# Commit das alterações no banco de dados
-conn.commit()
+# Function to check if a question already exists in the database
+def question_exists_in_db(conn, cursor, select_query, question_id):
+    cursor.execute(select_query, (question_id,))
+    return cursor.fetchone()
 
-# Fechar cursor e conexão com o banco de dados
-cursor.close()
-conn.close()
+# Function to insert a new question into the database
+def insert_question_into_db(conn, cursor, insert_query, values):
+    cursor.execute(insert_query, values)
+    conn.commit()
+
+# Function to fetch and store the title
+def fetch_and_store_title(conn, cursor):
+    r = requests.get('https://kelanapi.azurewebsites.net/message/title')
+    if r.status_code == 200:
+        title = r.json()['title']
+        insert_query = '''
+        INSERT INTO title_item (title)
+        VALUES (%s)
+        '''
+        insert_question_into_db(conn, cursor, insert_query, (title,))
+        print('Title fetched and stored successfully!')
+
+# Main function
+def main():
+    conn = create_db_connection()
+    cursor = conn.cursor()
+
+    create_table_query = '''
+    CREATE TABLE IF NOT EXISTS respostas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        id_pergunta VARCHAR(255),
+        seller_id VARCHAR(255),
+        pergunta TEXT,
+        id_item VARCHAR(255)
+    )
+    '''
+    create_table_if_not_exists(conn, cursor, create_table_query)
+
+    while True:
+        time.sleep(30)
+        r = requests.post('https://kelanapi.azurewebsites.net/message/question')
+        if r.status_code == 200:
+            p = r.json()
+
+            if 'questionData' in p:
+                data = p['questionData']
+                question_id = data['id']
+
+                select_query = '''
+                SELECT id_pergunta FROM respostas WHERE id_pergunta = %s
+                '''
+                if not question_exists_in_db(conn, cursor, select_query, question_id):
+                    insert_query = '''
+                    INSERT INTO respostas (id_pergunta, seller_id, pergunta, id_item)
+                    VALUES (%s, %s, %s, %s)
+                    '''
+                    values = (question_id, data['seller_id'], data['text'], data['item_id'])
+                    insert_question_into_db(conn, cursor, insert_query, values)
+                    print('Question stored successfully!')
+
+        fetch_and_store_title(conn, cursor)
+
+    close_db_connection(conn, cursor)
+
+if __name__ == "__main__":
+    main()

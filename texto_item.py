@@ -1,11 +1,9 @@
 import requests
-import time
-import json
 
-def armazenar_resposta():
-    r = requests.post('https://kelanapi.azurewebsites.net/items/info')
+def armazenar_title_item():
+    r = requests.post('https://kelanapi.azurewebsites.net/name/title')
     
-    response_json = r.json()
-    print(response_json)
-    
-armazenar_resposta()
+    response_title = r.json()
+    print(response_title)
+
+armazenar_title_item()

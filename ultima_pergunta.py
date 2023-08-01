@@ -8,7 +8,7 @@ data_hora = pegar_data_hora.data_hora()
 
 # Função para armazenar a resposta no banco de dados e contar as atribuições bem-sucedidas
 def armazenar_resposta(resposta):
-    global contador_atribuicoes  # Adicionar a declaração 'global' aqui
+    #global contador_atribuicoes  # Adicionar a declaração 'global' aqui
 
     # Estabelecer conexão com o banco de dados
     conn = mysql.connector.connect(
@@ -41,7 +41,7 @@ def armazenar_resposta(resposta):
 
     if result:
         print("A pergunta já existe no banco de dados. Não será adicionada novamente.")
-        print('######################################################################')
+        
     else:
         # Inserir os valores na tabela
         insert_query = '''

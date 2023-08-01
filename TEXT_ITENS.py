@@ -4,54 +4,15 @@ import mysql.connector
 import time
 import pegar_data_hora
 
-# Database configuration
-db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',
-    'database': 'kelan'
-}
+data_hora = pegar_data_hora.data_hora()
 
-# Function to establish a database connection
-def create_db_connection():
-    return mysql.connector.connect(**db_config)
-
-# Function to close a database connection
-def close_db_connection(conn, cursor):
-    cursor.close()
-    conn.close()
-
-# Function to create a table if it doesn't exist
-def create_table_if_not_exists(conn, cursor, create_table_query):
-    cursor.execute(create_table_query)
-    conn.commit()
-
-# Function to check if a question already exists in the database
-def question_exists_in_db(conn, cursor, select_query, question_id):
-    cursor.execute(select_query, (question_id,))
-    return cursor.fetchone()
-
-# Function to insert a new question into the database
-def insert_question_into_db(conn, cursor, insert_query, values):
-    cursor.execute(insert_query, values)
-    conn.commit()
-
-# Function to fetch and store the title
-def fetch_and_store_title(conn, cursor):
-    r = requests.get('https://kelanapi.azurewebsites.net/message/title')
-    if r.status_code == 200:
-        title = r.json()['title']
-        insert_query = '''
-        INSERT INTO title_item (title)
-        VALUES (%s)
-        '''
-        insert_question_into_db(conn, cursor, insert_query, (title,))
-        print('Title fetched and stored successfully!')
-
-# Main function
-def main():
-    conn = create_db_connection()
-    cursor = conn.cursor()
+def armazenar_resposta(resposta):
+    conn = mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='',
+        database='kelan'
+    )
 
     create_table_query = '''
     CREATE TABLE IF NOT EXISTS respostas (
@@ -59,36 +20,80 @@ def main():
         id_pergunta VARCHAR(255),
         seller_id VARCHAR(255),
         pergunta TEXT,
-        id_item VARCHAR(255)
+        id_item VARCHAR(255),
+        title_item TEXT
     )
     '''
-    create_table_if_not_exists(conn, cursor, create_table_query)
+    cursor = conn.cursor()
+    cursor.execute(create_table_query)
+    conn.commit()
 
-    while True:
-        time.sleep(30)
-        r = requests.post('https://kelanapi.azurewebsites.net/message/question')
-        if r.status_code == 200:
-            p = r.json()
+    select_query = '''
+    SELECT id_pergunta FROM respostas WHERE id_pergunta = %s
+    '''
+    cursor.execute(select_query, (resposta['id_pergunta'],))
+    result = cursor.fetchone()
 
-            if 'questionData' in p:
-                data = p['questionData']
-                question_id = data['id']
+    if result:
+        print("A pergunta já existe no banco de dados. Não será adicionada novamente.")
+    else:
+        insert_query = '''
+        INSERT INTO respostas (id_pergunta, seller_id, pergunta, id_item, title_item)
+        VALUES (%s, %s, %s, %s, %s)
+        '''
+        values = (resposta['id_pergunta'], resposta['seller_id'], resposta['pergunta'], resposta['id_item'], resposta['title_item'])
+        cursor.execute(insert_query, values)
+        conn.commit()
+        print('Resposta armazenada no banco de dados com sucesso!','Data e Hora: ', pegar_data_hora.data_hora())
 
-                select_query = '''
-                SELECT id_pergunta FROM respostas WHERE id_pergunta = %s
-                '''
-                if not question_exists_in_db(conn, cursor, select_query, question_id):
-                    insert_query = '''
-                    INSERT INTO respostas (id_pergunta, seller_id, pergunta, id_item)
-                    VALUES (%s, %s, %s, %s)
-                    '''
-                    values = (question_id, data['seller_id'], data['text'], data['item_id'])
-                    insert_question_into_db(conn, cursor, insert_query, values)
-                    print('Question stored successfully!')
+        global contador_atribuicoes
+        contador_atribuicoes += 1
 
-        fetch_and_store_title(conn, cursor)
+    cursor.close()
+    conn.close()
 
-    close_db_connection(conn, cursor)
+def armazenar_title_item():
+    r = requests.post('https://kelanapi.azurewebsites.net/name/title')
+    
+    if r.status_code == 200:
+        response_title = r.json()
+        print(response_title)
+        return response_title
+    else:
+        print("Erro na requisição. Código de status:", r.status_code)
+        return None
 
-if __name__ == "__main__":
-    main()
+contador_atribuicoes = 0
+contador_requisicoes = 0
+contador_sem_resposta = 0
+ 
+while True:
+    time.sleep(30)
+    r = requests.post('https://kelanapi.azurewebsites.net/message/question')
+    if r.status_code == 200:
+        contador_requisicoes += 1
+        p = r.json()
+
+        if 'questionData' in p:
+            data = p['questionData']
+            title_item = armazenar_title_item()
+            resposta = {
+                'id_pergunta': data['id'],
+                'seller_id': data['seller_id'],
+                'pergunta': data['text'],
+                'id_item': data['item_id'],
+                'title_item': title_item
+            }
+            armazenar_resposta(resposta)
+    else:
+        print("Erro na requisição. Código de status:", r.status_code)
+        contador_sem_resposta += 1
+    print('###########################################')
+    print("Total de atribuições bem-sucedidas:", contador_atribuicoes)
+    print("Total de atribuições não-sucedidas:", contador_sem_resposta)
+    print("Total de requisições repetidas:", contador_requisicoes - contador_atribuicoes)
+    print("Total de requisições total:", contador_requisicoes)
+    print('###########################################')
+    pegar_data_hora.data_hora()
+    print('######################################################################')
+    print('######################################################################')

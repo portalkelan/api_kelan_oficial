@@ -3,6 +3,7 @@ import json
 import mysql.connector
 import time
 import pegar_data_hora
+from teste import process_request_and_update_db
 
 data_hora = pegar_data_hora.data_hora()
 
@@ -61,6 +62,7 @@ def armazenar_resposta(resposta):
     conn.close()
 
 global contador_requisicoes
+global contador_atribuicoes
 
 # Contador para as atribuições bem-sucedidas
 contador_atribuicoes = 0
@@ -84,6 +86,7 @@ while True:
                 'id_item': data['item_id']
             }
             armazenar_resposta(resposta)
+            
     else:
         print("Erro na requisição. Código de status:", r.status_code)
         contador_sem_resposta += 1
@@ -95,5 +98,7 @@ while True:
     print("Total de requisições total:", contador_requisicoes)
     print('###########################################')
     pegar_data_hora.data_hora()
+    #process_request_and_update_db()
     print('######################################################################')
     print('######################################################################')
+    process_request_and_update_db()

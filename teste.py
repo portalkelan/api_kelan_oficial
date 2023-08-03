@@ -2,6 +2,7 @@ import mysql.connector
 import json
 import time
 import requests
+from datetime import datetime
 
 # Função para extrair 'id' e 'title' do JSON
 def extract_id_and_title(json_data):
@@ -30,21 +31,24 @@ def process_request_and_update_db():
         # Extrair 'id' e 'title' do JSON
         item_id, item_title = extract_id_and_title(json_data)
 
+        # Get current date and time
+        data_hora = datetime.now()
+
         # Consulta para verificar se o valor 'id' já existe na tabela 'respostas'
         query = "SELECT id_item FROM respostas WHERE id_item = %s"
         cursor.execute(query, (item_id,))
 
         # Verificar se o valor já existe no banco
         if cursor.fetchone() is not None:
-            # Se o valor 'id' já existe, atualizar a coluna 'title_item'
-            update_query = "UPDATE respostas SET title_item = %s WHERE id_item = %s"
-            cursor.execute(update_query, (item_title, item_id))
+            # Se o valor 'id' já existe, atualizar a coluna 'title_item' e 'data_hora'
+            update_query = "UPDATE respostas SET title_item = %s, data_hora = %s WHERE id_item = %s"
+            cursor.execute(update_query, (item_title, data_hora, item_id))
             # Mostrar mensagem de requisição bem-sucedida
             print("Requisição bem-sucedida.")
         else:
             # Se o valor 'id' não existe, inserir na tabela 'respostas'
-            insert_query = "INSERT INTO respostas (id_item, title_item) VALUES (%s, %s)"
-            cursor.execute(insert_query, (item_id, item_title))
+            insert_query = "INSERT INTO respostas (id_item, title_item, datas_horas) VALUES (%s, %s, %s)"
+            cursor.execute(insert_query, (item_id, item_title, data_hora))
 
         # Commit das alterações no banco de dados
         conn.commit()

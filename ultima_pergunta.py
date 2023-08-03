@@ -5,10 +5,17 @@ import time
 import pegar_data_hora
 from teste import process_request_and_update_db
 
+# Contador para as atribuições bem-sucedidas
+contador_atribuicoes = 0
+global contador_requisicoes
+contador_requisicoes = 0
+contador_sem_resposta = 0
+
 data_hora = pegar_data_hora.data_hora()
 
 # Função para armazenar a resposta no banco de dados e contar as atribuições bem-sucedidas
 def armazenar_resposta(resposta):
+    global contador_atribuicoes
     #global contador_atribuicoes  # Adicionar a declaração 'global' aqui
 
     # Estabelecer conexão com o banco de dados
@@ -60,18 +67,10 @@ def armazenar_resposta(resposta):
     # Fechar a conexão com o banco de dados
     cursor.close()
     conn.close()
-
-global contador_requisicoes
-global contador_atribuicoes
-
-# Contador para as atribuições bem-sucedidas
-contador_atribuicoes = 0
-contador_requisicoes = 0
-contador_sem_resposta = 0
  
 # Loop infinito para obter e armazenar as respostas
 while True:
-    time.sleep(30)
+    time.sleep(3)
     r = requests.post('https://kelanapi.azurewebsites.net/message/question')
     if r.status_code == 200:
         contador_requisicoes += 1
@@ -98,7 +97,6 @@ while True:
     print("Total de requisições total:", contador_requisicoes)
     print('###########################################')
     pegar_data_hora.data_hora()
-    #process_request_and_update_db()
     print('######################################################################')
     print('######################################################################')
     process_request_and_update_db()

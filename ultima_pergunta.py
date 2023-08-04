@@ -3,30 +3,29 @@ import json
 import mysql.connector
 import time
 import pegar_data_hora
-from teste import process_request_and_update_db
+from texto_item import process_request_and_update_db
 
-# Contador para as atribuições bem-sucedidas
-contador_atribuicoes = 0
 global contador_requisicoes
+global contador_sem_resposta
+# Variáveis ​​globais para acompanhar a contagem de solicitações bem-sucedidas e falhas
+contador_atribuicoes = 0
 contador_requisicoes = 0
 contador_sem_resposta = 0
 
-data_hora = pegar_data_hora.data_hora()
 
-# Função para armazenar a resposta no banco de dados e contar as atribuições bem-sucedidas
-def armazenar_resposta(resposta):
-    global contador_atribuicoes
-    #global contador_atribuicoes  # Adicionar a declaração 'global' aqui
-
-    # Estabelecer conexão com o banco de dados
+def connect_to_db():
+    """Estabelece uma conexão com o banco de dados MySQL."""
     conn = mysql.connector.connect(
         host='localhost',
         user='root',
         password='',
         database='kelan'
     )
+    return conn
 
-    # Criar uma tabela se ela ainda não existir
+
+def create_table_if_not_exists(conn):
+    """Cria a tabela 'respostas' no banco de dados se ela não existir."""
     create_table_query = '''
     CREATE TABLE IF NOT EXISTS respostas (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -40,57 +39,64 @@ def armazenar_resposta(resposta):
     cursor.execute(create_table_query)
     conn.commit()
 
-    # Verificar se a pergunta já existe no banco de dados
-    select_query = '''
-    SELECT id_pergunta FROM respostas WHERE id_pergunta = %s
-    '''
-    cursor.execute(select_query, (resposta['id_pergunta'],))
-    result = cursor.fetchone()
 
-    if result:
+def response_exists(conn, id_pergunta):
+    """Verifica se uma resposta já existe no banco de dados."""
+    select_query = 'SELECT id_pergunta FROM respostas WHERE id_pergunta = %s'
+    cursor = conn.cursor()
+    cursor.execute(select_query, (id_pergunta,))
+    result = cursor.fetchone()
+    return bool(result)
+
+
+def store_response(conn, resposta):
+    """Armazena uma resposta no banco de dados."""
+    global contador_atribuicoes
+
+    if response_exists(conn, resposta['id_pergunta']):
         print("A pergunta já existe no banco de dados. Não será adicionada novamente.")
-        
     else:
-        # Inserir os valores na tabela
         insert_query = '''
         INSERT INTO respostas (id_pergunta, seller_id, pergunta, id_item)
         VALUES (%s, %s, %s, %s)
         '''
         values = (resposta['id_pergunta'], resposta['seller_id'], resposta['pergunta'], resposta['id_item'])
+        cursor = conn.cursor()
         cursor.execute(insert_query, values)
         conn.commit()
-        print('Resposta armazenada no banco de dados com sucesso!','Data e Hora: ', pegar_data_hora.data_hora())
+        print('Resposta armazenada no banco de dados com sucesso!', 'Data e Hora: ', pegar_data_hora.data_hora())
+        contador_atribuicoes += 1  # Incrementar o contador de atribuições bem-sucedidas
 
-        # Incrementar o contador de atribuições bem-sucedidas
-        contador_atribuicoes += 1
 
-    # Fechar a conexão com o banco de dados
-    cursor.close()
-    conn.close()
- 
-# Loop infinito para obter e armazenar as respostas
 while True:
-    time.sleep(3)
-    r = requests.post('https://kelanapi.azurewebsites.net/message/question')
-    if r.status_code == 200:
+    time.sleep(30)
+    
+    try:
+        r = requests.post('https://kelanapi.azurewebsites.net/message/question')
         contador_requisicoes += 1
-        p = r.json()
-
-        if 'questionData' in p:
-            data = p['questionData']
-            resposta = {
-                'id_pergunta': data['id'],
-                'seller_id': data['seller_id'],
-                'pergunta': data['text'],
-                'id_item': data['item_id']
-            }
-            armazenar_resposta(resposta)
-            
-    else:
-        print("Erro na requisição. Código de status:", r.status_code)
-        contador_sem_resposta += 1
+        if r.status_code == 200:
+            p = r.json()
+            if 'questionData' in p:
+                data = p['questionData']
+                resposta = {
+                    'id_pergunta': data['id'],
+                    'seller_id': data['seller_id'],
+                    'pergunta': data['text'],
+                    'id_item': data['item_id']
+                }
+                try:
+                    conn = connect_to_db()
+                    create_table_if_not_exists(conn)
+                    store_response(conn, resposta)
+                    conn.close()
+                except mysql.connector.Error as err:
+                    print("Erro ao conectar ao MySQL", err)
+        else:
+            print("Erro na requisição. Código de status:", r.status_code)
+            contador_sem_resposta += 1
+    except requests.exceptions.RequestException as err:
+        print("Erro na solicitação", err)
     print('###########################################')
-    # Imprimir o contador de atribuições bem-sucedidas
     print("Total de atribuições bem-sucedidas:", contador_atribuicoes)
     print("Total de atribuições não-sucedidas:", contador_sem_resposta)
     print("Total de requisições repetidas:", contador_requisicoes - contador_atribuicoes)

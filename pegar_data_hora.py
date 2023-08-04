@@ -1,7 +1,11 @@
-import datetime as dt
+from datetime import datetime
 
-# Pegar data e hora
-def data_hora():
-    agora = dt.datetime.now()
-    data_hora = agora.strftime("%A %d %B %y %I:%M:%S")
-    print(data_hora)
+def get_current_datetime():
+    # Obtenha a data e hora atual
+    now = datetime.now()
+
+    # Formate a data e hora no formato apropriado para o MySQL
+    formatted_now = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    return formatted_now
+

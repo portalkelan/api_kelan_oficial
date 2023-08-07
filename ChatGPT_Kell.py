@@ -5,7 +5,7 @@ import openai
 import json
 import time
 
-openai.api_key='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'
+openai.api_key='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'
 
 previous_itemName = ""
 previous_question_text = ""

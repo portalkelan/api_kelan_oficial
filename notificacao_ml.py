@@ -3,7 +3,7 @@ import time
 import json
 
 while True:
-    time.sleep(3)
+    time.sleep(10)
     def fazer_requisicao(url):
         try:
             resposta = requests.post(url)

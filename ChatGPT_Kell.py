@@ -4,61 +4,16 @@ import requests
 import openai
 import json
 import time
+from ultima_pergunta import 
+from texto_item import 
 
 openai.api_key='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'
 
-previous_itemName = ""
-previous_question_text = ""
-previous_itemDescription = ""
-
 def process_data():
-    global previous_itemName, previous_question_text, previous_itemDescription
-
-    # PEGANDO O NOME DO ITEM  
-    url = 'https://kelanapi.azurewebsites.net/name/title'
-    response = requests.post(url)
-    itemName= ""
-    if response.status_code == 200:
-        Name = response.json()
-        itemName = Name['newItemData']['title']
-
-    # Verificar se o nome do item é o mesmo que o anterior
-    if itemName == previous_itemName:
-        print("O nome do item é o mesmo que o anterior.")
-    else:
-        print(itemName)
-    previous_itemName = itemName
-
     # PEGANDO A PERGUNTA 
-    url = 'https://kelanapi.azurewebsites.net/message/question'
-    response = requests.post(url)
-    question_text = ""
-    if response.status_code == 200:
-        data = response.json()
-        question_text = data['questionData']['text']
-
-    # Verificar se o texto da pergunta é o mesmo que o anterior
-    if question_text == previous_question_text:
-        print("O texto da pergunta é o mesmo que o anterior.")
-    else:
-         print(f"Texto da pergunta: {question_text}")
-    previous_question_text = question_text
 
     # PEGANDO A  DESCRIÇÃO 
-    url = 'https://kelanapi.azurewebsites.net/items/info'
-    response = requests.post(url)
-    itemDescription=""
-    if response.status_code == 200:
-        item = response.json()
-        itemDescription = item['itemData']['plain_text']
-
-    # Verificar se a descrição do item é o mesma que a anterior
-    if itemDescription == previous_itemDescription:
-        print("A descrição do item é a mesma que a anterior.")
-    else:
-        print(itemDescription)
-    previous_itemDescription = itemDescription
-
+    
     # CHAT FORMULA RESPOSTA
     temperature = 0.5
     max_tokens = 256
@@ -88,20 +43,12 @@ def process_data():
         # Converter o dicionário em uma string JSON
         response_json = json.dumps(response_dict)
 
-         #ENVIANDO A RESPOSTA PARA O MELI
-
+        #ENVIANDO A RESPOSTA PARA O MELI
         url = 'https://kelanapi.azurewebsites.net/chat'
 
         headers = {'Content-Type': 'application/json'}
-
         response = requests.post(url, data=json.dumps(response_dict), headers=headers)
 
-        # Agora você pode verificar a resposta
-        if response.status_code == 200:
-            print('POST foi bem-sucedido')
-        else:
-            print(f'Erro ao fazer POST: {response.status_code}') 
-            
         #ENVIAR PARA O BANCO DE DADOS
         def insert_into_database(question_text, itemName, itemDescription, reply):
             try:
@@ -121,9 +68,7 @@ def process_data():
                     con.close()
                     print("Conexão com o MySQL encerrada")
                     
-        insert_into_database(question_text, itemName, itemDescription, reply)
-
+        insert_into_database(reply)
 
 while True:
     process_data()
-    time.sleep(30)

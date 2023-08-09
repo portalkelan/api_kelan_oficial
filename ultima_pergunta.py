@@ -9,6 +9,7 @@ current_datetime = get_current_datetime()
 
 global contador_requisicoes
 global contador_sem_resposta
+
 contador_atribuicoes = 0
 contador_requisicoes = 0
 contador_sem_resposta = 0
@@ -33,15 +34,20 @@ def create_table_if_not_exists(conn):
         datas_horas DATETIME
     )
     '''
-    cursor = conn.cursor()
-    cursor.execute(create_table_query)
-    conn.commit()
+
+    # Cria um cursor para executar consultas SQL
+    cursor = conn.cursor(buffered=True)
+    #cursor = conn.cursor()
+    with conn.cursor() as cursor:
+        cursor.execute(create_table_query)
+        conn.commit()
 
 def response_exists(conn, id_pergunta):
     select_query = 'SELECT id_pergunta FROM respostas WHERE id_pergunta = %s'
-    cursor = conn.cursor()
-    cursor.execute(select_query, (id_pergunta,))
-    result = cursor.fetchone()
+    cursor = conn.cursor(buffered=True)
+    with conn.cursor() as cursor:
+        cursor.execute(select_query, (id_pergunta,))
+        result = cursor.fetchone()
     return bool(result)
 
 def store_response(conn, resposta, current_datetime):
@@ -58,6 +64,7 @@ def store_response(conn, resposta, current_datetime):
         cursor = conn.cursor()
         cursor.execute(insert_query, values)
         conn.commit()
+
         print('Resposta armazenada no banco de dados com sucesso!', 'Data e Hora: ', current_datetime)
         contador_atribuicoes += 1
 
@@ -90,6 +97,9 @@ while True:
             contador_sem_resposta += 1
     except requests.exceptions.RequestException as err:
         print("Erro na solicitação", err)
+
+    pergunta = p['questionData']['text']
+    
     print('###########################################')
     print("Total de atribuições bem-sucedidas:", contador_atribuicoes)
     print("Total de atribuições não-sucedidas:", contador_sem_resposta)

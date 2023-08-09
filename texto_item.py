@@ -28,6 +28,7 @@ def process_request_and_update_db():
             response = requests.post('https://kelanapi.azurewebsites.net/name/title')
             response.raise_for_status()  # Verifica se a requisição foi bem-sucedida
             json_data = response.json()  # Converte a resposta em JSON
+            #titulo_itens = ['newItemData']['title']
 
             # Extrair 'id' e 'title' do JSON
             item_id, item_title = extract_id_and_title(json_data)

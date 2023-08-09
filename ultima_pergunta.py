@@ -4,6 +4,7 @@ import mysql.connector
 import time
 from pegar_data_hora import get_current_datetime
 from texto_item import process_request_and_update_db
+import texto_item
 
 current_datetime = get_current_datetime()
 
@@ -84,6 +85,7 @@ while True:
                     'pergunta': data['text'],
                     'id_item': data['item_id']
                 }
+                #titulo_itens = ['newItemData']['title']
                 current_datetime = get_current_datetime()
                 try:
                     conn = connect_to_db()

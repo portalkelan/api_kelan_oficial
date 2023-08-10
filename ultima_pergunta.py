@@ -67,7 +67,7 @@ def store_response(conn, resposta, current_datetime):
         contador_atribuicoes += 1
 
 while True:
-    time.sleep(5)
+    time.sleep(30)
     
     try:
         r = requests.post('https://kelanapi.azurewebsites.net/message/question')

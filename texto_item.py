@@ -36,7 +36,7 @@ def process_request_and_update_db():
             cursor.execute(query, (item_id,))
 
             # Verificar se o valor já existe no banco
-            if cursor.fetchone() is not None:
+            if cursor.fetchall() is not None:
                 # Se o valor 'id' já existe, atualizar a coluna 'title_item'
                 update_query = "UPDATE respostas SET title_item = %s WHERE id_item = %s"
                 cursor.execute(update_query, (item_title, item_id))

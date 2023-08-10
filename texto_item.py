@@ -19,9 +19,7 @@ def process_request_and_update_db():
     )
 
     # Cria um cursor para executar consultas SQL
-    cursor = conn.cursor(buffered=True)
     with conn.cursor() as cursor:
-    #cursor = conn.cursor()
 
         try:
             # Código para obter a requisição
@@ -29,7 +27,6 @@ def process_request_and_update_db():
             print(response)
             response.raise_for_status()  # Verifica se a requisição foi bem-sucedida
             json_data = response.json()  # Converte a resposta em JSON
-            #titulo_itens = ['newItemData']['title']
 
             # Extrair 'id' e 'title' do JSON
             item_id, item_title = extract_id_and_title(json_data)
@@ -59,8 +56,8 @@ def process_request_and_update_db():
 
         finally:
             # Fechar cursor e conexão com o banco de dados
-            #cursor.close()
             conn.close()
+            cursor.close()
 
 # Chamar a função
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import mysql.connector
 import time
 from pegar_data_hora import get_current_datetime
 from texto_item import process_request_and_update_db
-import texto_item
+
 
 current_datetime = get_current_datetime()
 
@@ -37,15 +37,12 @@ def create_table_if_not_exists(conn):
     '''
 
     # Cria um cursor para executar consultas SQL
-    cursor = conn.cursor(buffered=True)
-    #cursor = conn.cursor()
     with conn.cursor() as cursor:
         cursor.execute(create_table_query)
         conn.commit()
 
 def response_exists(conn, id_pergunta):
     select_query = 'SELECT id_pergunta FROM respostas WHERE id_pergunta = %s'
-    cursor = conn.cursor(buffered=True)
     with conn.cursor() as cursor:
         cursor.execute(select_query, (id_pergunta,))
         result = cursor.fetchone()
@@ -70,7 +67,7 @@ def store_response(conn, resposta, current_datetime):
         contador_atribuicoes += 1
 
 while True:
-    time.sleep(30)
+    time.sleep(5)
     
     try:
         r = requests.post('https://kelanapi.azurewebsites.net/message/question')
@@ -85,7 +82,7 @@ while True:
                     'pergunta': data['text'],
                     'id_item': data['item_id']
                 }
-                #titulo_itens = ['newItemData']['title']
+                
                 current_datetime = get_current_datetime()
                 try:
                     conn = connect_to_db()
@@ -99,8 +96,6 @@ while True:
             contador_sem_resposta += 1
     except requests.exceptions.RequestException as err:
         print("Erro na solicitação", err)
-
-    #pergunta = p['questionData']['text']
     
     print('###########################################')
     print("Total de atribuições bem-sucedidas:", contador_atribuicoes)

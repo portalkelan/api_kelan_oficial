@@ -100,7 +100,7 @@ while True:
     except requests.exceptions.RequestException as err:
         print("Erro na solicitação", err)
 
-    pergunta = p['questionData']['text']
+    #pergunta = p['questionData']['text']
     
     print('###########################################')
     print("Total de atribuições bem-sucedidas:", contador_atribuicoes)

@@ -5,6 +5,9 @@ import time
 from pegar_data_hora import get_current_datetime
 from texto_item import process_request_and_update_db
 
+pergunta = ""
+itemName = ""
+itemDescription = ""
 
 current_datetime = get_current_datetime()
 
@@ -76,6 +79,7 @@ while True:
             p = r.json()
             if 'questionData' in p:
                 data = p['questionData']
+                print(data)
                 resposta = {
                     'id_pergunta': data['id'],
                     'seller_id': data['seller_id'],
@@ -97,6 +101,8 @@ while True:
     except requests.exceptions.RequestException as err:
         print("Erro na solicitação", err)
     
+    pergunta = p['questionData']['text']
+    print(itemName)
     print('###########################################')
     print("Total de atribuições bem-sucedidas:", contador_atribuicoes)
     print("Total de atribuições não-sucedidas:", contador_sem_resposta)

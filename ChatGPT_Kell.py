@@ -10,6 +10,9 @@ from texto_item import dados_itens, titulo_itens
 openai.api_key='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'
 
 def process_data():
+    # PEGANDO A pergunta do cliente
+    pergunta_cliente = pergunta
+
     # PEGANDO A titulo do itens 
     itemName = titulo_itens
 

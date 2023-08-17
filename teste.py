@@ -1,42 +1,26 @@
-import requests
+import httpx
+import asyncio
 import time
-import json
 
-r = requests.post('https://kelanapi.azurewebsites.net/items/info')
-p = r.json()
-dados_itens = p['itemData']['plain_text']
-print(dados_itens)
+async def fetch_message():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post('https://kelanapi.azurewebsites.net/message/question')
+            response.raise_for_status()  # Lança um erro se a resposta não for bem-sucedida
+            print(response)
+            data = response.json()
+            print(data)  # Imprime o resultado da API
+        except httpx.HTTPError as exc:
+            print(f"An error occurred while requesting {exc.request.url!r}.")
+            print(f"Error message: {exc}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
+async def main():
+    while True:
+        await fetch_message()
+        print('Hello World')
+        await asyncio.sleep(3)
 
-# Criar um dicionário com a resposta
-        response_dict = {"ChatGPT": reply}
-
-        # Converter o dicionário em uma string JSON
-        response_json = json.dumps(response_dict)
-
-        #ENVIANDO A RESPOSTA PARA O MELI
-        #url = 'https://kelanapi.azurewebsites.net/chat'
-
-        #headers = {'Content-Type': 'application/json'}
-        #response = requests.post(url, data=json.dumps(response_dict), headers=headers)
-
-        #ENVIAR PARA O BANCO DE DADOS
-        """def insert_into_database(question_text, itemName, itemDescription, reply):
-            try:
-                con  = mysql.connector.connect(host='localhost', database = 'kelan_db', user = 'root', password= '')
-                if con.is_connected():
-                    cursor = con.cursor()
-                    query = "INSERT IGNORE INTO chat_db (question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s)"
-                    values = (question_text, itemName, itemDescription, reply)
-                    cursor.execute(query, values)
-                    con.commit()
-                    print(cursor.rowcount, "Registro inserido.")
-            except Error as e:
-                print("Erro ao conectar ao MySQL", e)
-            finally:
-                if con.is_connected():
-                    cursor.close()
-                    con.close()
-                    print("Conexão com o MySQL encerrada")
-                    
-        insert_into_database(reply)"""
+if __name__ == "__main__":
+    asyncio.run(main())

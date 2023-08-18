@@ -1,8 +1,7 @@
 import mysql.connector
 import json
-import time
 import requests
-
+item_title = ''
 # Função para extrair 'id' e 'title' do JSON
 def extract_id_and_title(json_data):
     item_id = json_data['newItemData']['id']
@@ -24,7 +23,6 @@ def process_request_and_update_db():
         try:
             # Código para obter a requisição
             response = requests.post('https://kelanapi.azurewebsites.net/name/title')
-            print(response)
             response.raise_for_status()  # Verifica se a requisição foi bem-sucedida
             json_data = response.json()  # Converte a resposta em JSON
 
@@ -58,7 +56,8 @@ def process_request_and_update_db():
             # Fechar cursor e conexão com o banco de dados
             conn.close()
             cursor.close()
-
+        
 # Chamar a função
 if __name__ == "__main__":
     process_request_and_update_db()
+    

@@ -6,8 +6,8 @@ from pegar_data_hora import get_current_datetime
 from texto_item import process_request_and_update_db
 
 pergunta = ""
-itemDescription = ""
-detalhe_item = ""
+detalhes_item = ""
+titulo_item = ""
 
 current_datetime = get_current_datetime()
 
@@ -69,57 +69,53 @@ def store_response(conn, resposta, current_datetime):
         print('Resposta armazenada no banco de dados com sucesso!', 'Data e Hora: ', current_datetime)
         contador_atribuicoes += 1
 
-while True:
-    time.sleep(3)
-    
-    try:
-        #pegar os detalhes do item
-        r = requests.post('https://kelanapi.azurewebsites.net/items/info')
-        p = r.json()
-        detalhe_item = p['itemData']['plain_text']
-        itemDescription = detalhe_item
-        time.sleep(2)
+try:
+    #pegar os detalhes do item
+    r = requests.post('https://kelanapi.azurewebsites.net/items/info')
+    p = r.json()
+    detalhe_item = p['itemData']['plain_text']
+    time.sleep(2)
 
-        #pgar o titulo do item
-        r = requests.post('https://kelanapi.azurewebsites.net/name/title')
-        p = r.json()
-        detalhe_item = p['newItemData']['title']
-        time.sleep(2)
+    #pgar o titulo do item
+    r = requests.post('https://kelanapi.azurewebsites.net/name/title')
+    p = r.json()
+    titulo_item = p['newItemData']['title']
+    time.sleep(2)
 
-        r = requests.post('https://kelanapi.azurewebsites.net/message/question')
-        contador_requisicoes += 1
-        if r.status_code == 200:
-            p = r.json()
-            if 'questionData' in p:
-                data = p['questionData']
-                pergunta = p['questionData']['text']
-                resposta = {
-                    'id_pergunta': data['id'],
-                    'seller_id': data['seller_id'],
-                    'pergunta': data['text'],
-                    'id_item': data['item_id']
-                }
-                
-                current_datetime = get_current_datetime()
-                try:
-                    conn = connect_to_db()
-                    create_table_if_not_exists(conn)
-                    store_response(conn, resposta, current_datetime)
-                    conn.close()
-                except mysql.connector.Error as err:
-                    print("Erro ao conectar ao MySQL", err)
-        else:
-            print("Erro na requisição. Código de status:", r.status_code)
-            contador_sem_resposta += 1
-    except requests.exceptions.RequestException as err:
-        print("Erro na solicitação", err)
-    print('###########################################')
-    print("Total de atribuições bem-sucedidas:", contador_atribuicoes)
-    print("Total de atribuições não-sucedidas:", contador_sem_resposta)
-    print("Total de requisições repetidas:", contador_requisicoes - contador_atribuicoes)
-    print("Total de requisições total:", contador_requisicoes)
-    print('###########################################')
-    print(current_datetime)
-    print('######################################################################')
-    print('######################################################################')
-    process_request_and_update_db()
+    r = requests.post('https://kelanapi.azurewebsites.net/message/question')
+    contador_requisicoes += 1
+    if r.status_code == 200:
+        p = r.json()
+        if 'questionData' in p:
+            data = p['questionData']
+            pergunta = p['questionData']['text']
+            resposta = {
+                'id_pergunta': data['id'],
+                'seller_id': data['seller_id'],
+                'pergunta': data['text'],
+                'id_item': data['item_id']
+            }
+            
+            current_datetime = get_current_datetime()
+            try:
+                conn = connect_to_db()
+                create_table_if_not_exists(conn)
+                store_response(conn, resposta, current_datetime)
+                conn.close()
+            except mysql.connector.Error as err:
+                print("Erro ao conectar ao MySQL", err)
+    else:
+        print("Erro na requisição. Código de status:", r.status_code)
+        contador_sem_resposta += 1
+except requests.exceptions.RequestException as err:
+    print("Erro na solicitação", err)
+print('###########################################')
+print("Total de atribuições bem-sucedidas:", contador_atribuicoes)
+print("Total de atribuições não-sucedidas:", contador_sem_resposta)
+print("Total de requisições repetidas:", contador_requisicoes - contador_atribuicoes)
+print("Total de requisições total:", contador_requisicoes)
+print('###########################################')
+print(current_datetime)
+print('######################################################################')
+print('######################################################################')
+process_request_and_update_db()

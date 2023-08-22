@@ -5,7 +5,7 @@ import json
 while True:
     time.sleep(3)
     try:
-        r = requests.get('https://testeskelan.azurewebsites.net/notification/teste')
+        r = requests.get("https://kelanapi.azurewebsites.net/notification/teste")
         print(r)
         if r.status_code == 200:
             p = r.json()

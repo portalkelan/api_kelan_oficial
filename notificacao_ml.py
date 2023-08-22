@@ -5,17 +5,17 @@ import json
 while True:
     time.sleep(3)
     try:
-        r = requests.get("https://kelanapi.azurewebsites.net/notification/teste")
-        print(r)
+        r = requests.post("https://testeappi.azurewebsites.net/notification/teste")
         if r.status_code == 200:
             p = r.json()
             print(p)
-
+            
+            data1 = p['topic']
+            data2 = p['resource']
+            data3 = p['user_id']
+            data4 = p['received']
+            
+            #print(f"Tipo da Notificação: {data1}, Recursos: {data2}, Conta: {data3}, hora recebida: {data4}")
+            
     except requests.exceptions.RequestException as e:
         print(f"Ocorreu um erro na requisição: {e}")
-
-    # Exemplo de uso
-    #url_servidor = "https://kelanapi.azurewebsites.net/notification/teste"
-    #resposta_servidor = fazer_requisicao(url_servidor)
-    #with open("json_perguntas/todas_notification.json", 'w') as file:
-    #    json.dump(resposta_servidor, file, indent=4)

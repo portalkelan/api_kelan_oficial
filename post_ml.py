@@ -21,3 +21,10 @@ arquivo_json = "json_perguntas/dados_perguntas.json"
 
 # Chamando a função para enviar o arquivo JSON
 enviar_arquivo_json(url_servidor, arquivo_json)
+
+
+# Exemplo de uso
+    #url_servidor = "https://kelanapi.azurewebsites.net/notification/teste"
+    #resposta_servidor = fazer_requisicao(url_servidor)
+    #with open("json_perguntas/todas_notification.json", 'w') as file:
+    #    json.dump(resposta_servidor, file, indent=4)

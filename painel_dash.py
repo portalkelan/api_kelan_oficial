@@ -1,10 +1,21 @@
+from dash import html, dcc
+from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
+import pandas as pd
+import numpy as np
 import dash
 import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import mysql.connector
-import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from dash_bootstrap_templates import load_figure_template
+
+
+df_data = pd.read_csv("supermarket_sales.csv")
+df_data["Date"] = pd.to_datetime(df_data["Date"])
 
 app = dash.Dash(__name__)
 server = app.server

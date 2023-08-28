@@ -13,7 +13,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash_bootstrap_templates import load_figure_template
 
-
 df_data = pd.read_csv("supermarket_sales.csv")
 df_data["Date"] = pd.to_datetime(df_data["Date"])
 

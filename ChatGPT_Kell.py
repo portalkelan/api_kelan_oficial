@@ -5,6 +5,7 @@ import openai
 import json
 import time
 from ultima_pergunta import pergunta, detalhe_item, titulo_item
+from catalogo_kelan import catalogo
 
 openai.api_key='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'
 
@@ -18,15 +19,15 @@ def process_data():
     # PEGANDO A  DESCRIÇÃO 
     itemDescription = detalhe_item
 
-    # CHAT FORMULA RESPOSTA
-    temperature = 0.5
+## CHAT FORMULA RESPOSTA 
+    temperature = 0
     max_tokens = 256
-    messages=[
-        {"role": "system", "content": f"Você é o assistente virtual da empresa KELAN MÓVEIS, e deve responder as perguntas do cliente utilizando as seguintes informações: {itemName} e {itemDescription}.Gere respostas curtas e objetivas, utilizando  no maximo 200 tokens. Ao final de cada mensagem, escreva: Att, Kel da KELAN. CAso não encontre as respostas para a pergunta nas variáveis instanciadas acima,  aqui estão alguns scripts úteis: Caso lhe perguntem sobre frete, responda: O frete dos produtos é calculado pelo Mercado Livre, e pode variar dependendo da distância entre a cidade do comprador da nossa sede em SP.Toda a responsabilidade sobre a entrega fica sob a transportadora do Mercado Livre.Caso receba algum produto danificado ou tenha outros problemas, por favor entre em contato através das mensagens. Caso lhe perguntem se trabalhamos com Dropshipping, responda que sim. Caso lhe perguntem se fazemos móveis com medidas diferentes das descritas nos anúncios, se desculpe e diga que não. Caso não encontre a resposta para a pergunta com as informações que você possui, explique que não possui tal informação e instrua o cliente a entrar em contato conosco. Caso o cliente tenha algum problema com o produto, o instrua a entrar em contato pelas mensagens. SOBRE A KELAN:A Kelan Indústria e Comércio de Móveis LTDA, consolidada no mercado desde 2016, com sede em Penápolis SP, já atendeu mais de 500 mil clientes, sendo reconhecida nacionalmente e internacionalmente pela sua excelência em cada detalhe no desenvolvimento de seus produtos.Prezamos sempre o bem-estar e satisfação de nossos clientes, além da sustentabilidade.Nossos produtos contam com design sofisticado e moderno, permitindo que você tenha total liberdade para deixar seu ambiente ainda mais elegante."}
+    messages = [
+        {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja Kelan Móveis na plataforma Mercado Livre, você é a Kel, assistente virtual da Kelan. Ao final de mensagem, escreva: Att, Kel Equipe Kelan. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre ou pelas nossas redes sociais, será um prazer ajudá-lo!' Caso o cliente não consiga entrar em contato através das mensagens, explique: Infelizmente, de acordo com as regras da plataforma, não podemos direcioná-lo para nossos canais de atendimento, o que você pode fazer é pesquisar nosso nome afim de nos encontrar em outros canais. Não responda perguntas sobre preços, não invente respostas, siga as informações do catalogo e descrição à risca! Catalogo: {itemDescription} + {catalogo}"}
     ]
 
-    message = pergunta_cliente
-    print(f"Message: {message}")
+    message = itemDescription
+    
     if message:
         messages.append(
             {"role": "user", "content": message},
@@ -42,5 +43,13 @@ def process_data():
         messages.append({"role": "assistant", "content": reply})
 
 while True:
-    time.sleep(30)
+    print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
     process_data()
+    time.sleep(300)
+
+#POSTA A RESPOSTA NO MELI
+#url = 'https://kelanapi.azurewebsites.net/chat'
+#headers = {'Content-Type': 'application/json'}
+#response = requests.post(url, data=json.dumps(response_dict), headers=headers)
+#if response.status_code == 200:
+#    print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')

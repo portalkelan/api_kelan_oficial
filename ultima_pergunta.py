@@ -20,10 +20,10 @@ contador_sem_resposta = 0
 
 def connect_to_db():
     conn = mysql.connector.connect(
-        host='thleandrokelan.mysql.pythonanywhere-services.com',
-        user='thleandrokelan',
-        password='xX21417692Xx',
-        database='thleandrokelan$kelan_api'
+        host='localhost',
+        user='root',
+        password='',
+        database='kelan'
     )
     return conn
 

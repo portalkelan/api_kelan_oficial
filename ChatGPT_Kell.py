@@ -5,7 +5,7 @@ from ultima_pergunta import pergunta, detalhe_item, titulo_item
 from catalogo_kelan import catalogo
 import queue  # Importando a biblioteca queue
 
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Criando a fila e a lista de requisições processadas
 request_queue = queue.Queue()

@@ -6,7 +6,7 @@ import queue
 
 # Configuração da chave da API da OpenAI
 # (Recomendo mover isso para uma variável de ambiente ou arquivo de configuração)
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Criando a fila e a lista de requisições processadas
 request_queue = queue.Queue()

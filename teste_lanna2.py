@@ -5,25 +5,20 @@ import openai
 import json
 import time
 from datetime import datetime
-#from catalogo_kelan import catalogo, link_catalogo
 
-## Converte a notação da hora para o padrão brasileiro 
 def converter_formato_com_hora(data_iso):
     data_objeto = datetime.fromisoformat(data_iso)
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'
 
-## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
 queue = []
 
-## Inicia as requisições
 def fetch_data_to_queue():
     global previous_question_id
 
-##  NOME DO ITEM/ANÚNCIO
     url = 'https://kelanapi.azurewebsites.net/name/title'
     response = requests.post(url)
     if response.status_code != 200:
@@ -33,7 +28,6 @@ def fetch_data_to_queue():
     Name = response.json()
     itemName = Name['newItemData']['title']
 
-##  PERGUNTA
     url = 'https://kelanapi.azurewebsites.net/message/question'
     response = requests.post(url)
     if response.status_code != 200:
@@ -53,37 +47,31 @@ def process_queue():
     itemName, question_data = queue.pop(0)
     process_data(itemName, question_data)
 
-## Separa as chaves que serão usadas para formular resposta ou guardar no banco de dados
-def process_data(itemName, question_data):
-    question_text = question_data['questionData']['text']
-    question_id = question_data['questionData']['id']
-    seller_id = question_data['questionData']['seller_id']
-    item_id = question_data['questionData']['item_id']
-    date_created = converter_formato_com_hora(question_data['questionData']['date_created'])
+def question_id_exists_in_db(question_id):
+    try:
+        con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
+        if con.is_connected():
+            cursor = con.cursor()
+            query = "SELECT 1 FROM api_kelan_mlb WHERE question_id = %s"
+            cursor.execute(query, (question_id,))
+            result = cursor.fetchone()
+            return result is not None
+    except Error as e:
+        print("Erro ao conectar ao MySQL", e)
+    finally:
+        if con.is_connected():
+            cursor.close()
+            con.close()
+    return False
 
-## DESCRIÇÃO DO ANÚNCIO 
-    url = 'https://kelanapi.azurewebsites.net/items/info'
-    response = requests.post(url)
-    if response.status_code != 200:
-        print(f"Erro ao chamar a API (Descrição do item): {response.status_code} - {response.text}")
-        return
-
-    item = response.json()
-    itemDescription = item['itemData']['plain_text']
-    print(itemDescription)
-
-## CHAT FORMULA RESPOSTA 
+def generate_and_post_response(itemDescription, question_text):
     temperature = 0
     max_tokens = 256
     messages = [
         {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja Kelan Móveis na plataforma Mercado Livre, você é a Kel, assistente virtual da Kelan. Ao final de mensagem, escreva: Att, Kel Equipe Kelan. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre ou pelas nossas redes sociais, será um prazer ajudá-lo!' Caso o cliente não consiga entrar em contato através das mensagens, explique: Infelizmente, de acordo com as regras da plataforma, não podemos direcioná-lo para nossos canais de atendimento, o que você pode fazer é pesquisar nosso nome afim de nos encontrar em outros canais. Não responda perguntas sobre preços, não invente respostas, siga as informações do catalogo e descrição à risca! Catalogo: {itemDescription}"}
     ]
-    message = question_text
-    print(f"Message: {message}")
-    if message:
-        messages.append(
-            {"role": "user", "content": message},
-        )
+    if question_text:
+        messages.append({"role": "user", "content": question_text})
         chat = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=messages,
@@ -95,16 +83,38 @@ def process_data(itemName, question_data):
         messages.append({"role": "assistant", "content": reply})
 
         response_dict = {"/": reply}
-
-## POSTA A RESPOSTA NO MELI
         url = 'https://kelanapi.azurewebsites.net/chat'
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, data=json.dumps(response_dict), headers=headers)
         if response.status_code == 200:
             print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
+    return reply
+    
+def process_data(itemName, question_data):
+    question_text = question_data['questionData']['text']
+    question_id = question_data['questionData']['id']
+    seller_id = question_data['questionData']['seller_id']
+    item_id = question_data['questionData']['item_id']
+    date_created = converter_formato_com_hora(question_data['questionData']['date_created'])
 
-## GUARDA AS CHAVES NO BANCO DE DADOS
-        insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
+    url = 'https://kelanapi.azurewebsites.net/items/info'
+    response = requests.post(url)
+    if response.status_code != 200:
+        print(f"Erro ao chamar a API (Descrição do item): {response.status_code} - {response.text}")
+        return
+
+    item = response.json()
+    itemDescription = item['itemData']['plain_text']
+    print(itemDescription)
+
+    if not question_id_exists_in_db(question_id):
+        reply = generate_and_post_response(itemDescription, question_text)
+    else:
+        reply = ""
+
+    # ... (resto do código para inserir no banco de dados)
+    ## GUARDA AS CHAVES NO BANCO DE DADOS
+    insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
 
 def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply):
     try:
@@ -123,10 +133,9 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
             cursor.close()
             con.close()
             print("Conexão com o MySQL encerrada")
-            
-## LOOP 5 EM 5 MINUTOS
+
 while True:
-    print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
+    print("buscando perguntas...")
     fetch_data_to_queue()
     process_queue()
-    time.sleep(300)
+    time.sleep(120)

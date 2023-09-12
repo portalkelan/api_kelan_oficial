@@ -5,15 +5,15 @@ import openai
 import json
 import time
 from datetime import datetime
-#from catalogo_kelan import catalogo, link_catalogo
 
+import painel_dash
 ## Converte a notação da hora para o padrão brasileiro 
 def converter_formato_com_hora(data_iso):
     data_objeto = datetime.fromisoformat(data_iso)
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -123,10 +123,11 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
             cursor.close()
             con.close()
             print("Conexão com o MySQL encerrada")
-            
+
+
 ## LOOP 5 EM 5 MINUTOS
 while True:
     print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
     fetch_data_to_queue()
     process_queue()
-    time.sleep(300)
+    time.sleep(3000)

@@ -24,7 +24,7 @@ def fetch_data_to_queue():
     global previous_question_id
 
 ##  NOME DO ITEM/ANÚNCIO
-    url = 'https://kelanapi.azurewebsites.net/name/title'
+    url = 'https://kelanapi.azurewebsites.net/kelan/name/title'
     response = requests.post(url)
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
@@ -34,7 +34,7 @@ def fetch_data_to_queue():
     itemName = Name['newItemData']['title']
 
 ##  PERGUNTA
-    url = 'https://kelanapi.azurewebsites.net/message/question'
+    url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
     response = requests.post(url)
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Pergunta): {response.status_code} - {response.text}")
@@ -62,7 +62,7 @@ def process_data(itemName, question_data):
     date_created = converter_formato_com_hora(question_data['questionData']['date_created'])
 
 ## DESCRIÇÃO DO ANÚNCIO 
-    url = 'https://kelanapi.azurewebsites.net/items/info'
+    url = 'https://kelanapi.azurewebsites.net/kelan/items/info'
     response = requests.post(url)
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Descrição do item): {response.status_code} - {response.text}")
@@ -97,7 +97,7 @@ def process_data(itemName, question_data):
         response_dict = {"/": reply}
 
 ## POSTA A RESPOSTA NO MELI
-        url = 'https://kelanapi.azurewebsites.net/chat'
+        url = 'https://kelanapi.azurewebsites.net/kelan/chat'
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, data=json.dumps(response_dict), headers=headers)
         if response.status_code == 200:

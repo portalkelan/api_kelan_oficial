@@ -6,14 +6,14 @@ import json
 import time
 from datetime import datetime
 
-import painel_dash
+#import painel_dash
 ## Converte a notação da hora para o padrão brasileiro 
 def converter_formato_com_hora(data_iso):
     data_objeto = datetime.fromisoformat(data_iso)
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""

@@ -18,7 +18,10 @@ config = {
 connection = mysql.connector.connect(**config)
 
 # Buscar dados
-query = "SELECT * FROM api_kelan_mlb"
+#query = "SELECT * FROM api_kelan_mlb"
+#df = pd.read_sql(query, connection)
+
+query = "SELECT * FROM api_kelan_mlb ORDER BY date_created ASC"  # Adicionando ORDER BY clause
 df = pd.read_sql(query, connection)
 
 # Fechar conexão

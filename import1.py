@@ -29,9 +29,19 @@ def fetch_data_to_queue():
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
         return
-
+    
     Name = response.json()
     itemName = Name['newItemData']['title']
+
+    ##  NOME DO ITEM/ANÚNCIO
+    url = 'https://kelanapi.azurewebsites.net/kelan/name/title'
+    response = requests.post(url)
+    if response.status_code != 200:
+        print(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
+        return
+
+    Name_may = response.json()
+    itemName_may = Name['newItemData']['title']
 
 ##  PERGUNTA
     url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
@@ -46,12 +56,25 @@ def fetch_data_to_queue():
         queue.append((itemName, question_data))
         previous_question_id = question_data['questionData']['id']
 
+    ##  PERGUNTA
+    url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
+    response = requests.post(url)
+    if response.status_code != 200:
+        print(f"Erro ao chamar a API (Pergunta): {response.status_code} - {response.text}")
+        return
+
+    question_data_may = response.json()
+
+    if question_data['questionData']['id'] != previous_question_id:
+        queue.append((itemName, question_data))
+        previous_question_id_may = question_data['questionData']['id']
+
 def process_queue():
     if not queue:
         return
 
-    itemName, question_data = queue.pop(0)
-    process_data(itemName, question_data)
+    itemName, question_data, itemName_may,question_data_may = queue.pop(0)
+    process_data(itemName, question_data,itemName_may,question_data_may)
 
 ## Separa as chaves que serão usadas para formular resposta ou guardar no banco de dados
 def process_data(itemName, question_data):

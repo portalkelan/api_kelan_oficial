@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -130,4 +130,4 @@ while True:
     print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
     fetch_data_to_queue()
     process_queue()
-    time.sleep(3000)
+    time.sleep(1500)

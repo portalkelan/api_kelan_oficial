@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -90,7 +90,7 @@ def process_data(itemName, question_data):
             temperature=temperature,
             max_tokens=max_tokens
         )
-        global reply
+        
         reply = chat.choices[0].message.content
         print(f"ChatGPT: {reply}")
         messages.append({"role": "assistant", "content": reply})

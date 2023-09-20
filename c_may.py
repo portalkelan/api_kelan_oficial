@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -90,6 +90,7 @@ def process_data(itemName, question_data):
             temperature=temperature,
             max_tokens=max_tokens
         )
+        
         reply = chat.choices[0].message.content
         print(f"ChatGPT: {reply}")
         messages.append({"role": "assistant", "content": reply})
@@ -130,4 +131,4 @@ while True:
     print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
     fetch_data_to_queue()
     process_queue()
-    time.sleep(3000)
+    time.sleep(300)

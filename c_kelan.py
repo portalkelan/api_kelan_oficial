@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""

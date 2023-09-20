@@ -111,7 +111,7 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
         con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
-            query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT IGNORE INTO api_may_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
             cursor.execute(query, values)
             con.commit()

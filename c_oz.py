@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -90,6 +90,7 @@ def process_data(itemName, question_data):
             temperature=temperature,
             max_tokens=max_tokens
         )
+        
         reply = chat.choices[0].message.content
         print(f"ChatGPT: {reply}")
         messages.append({"role": "assistant", "content": reply})
@@ -111,7 +112,7 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
         con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
-            query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT IGNORE INTO api_oz_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
             cursor.execute(query, values)
             con.commit()
@@ -130,4 +131,4 @@ while True:
     print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
     fetch_data_to_queue()
     process_queue()
-    time.sleep(3000)
+    time.sleep(300)

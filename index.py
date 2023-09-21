@@ -11,13 +11,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash_bootstrap_templates import ThemeSwitchAIO
 import mysql.connector
-from sqlalchemy import create_engine
-import pywhatkit
-
-
-
-# Configuração da conexão com o banco de dados
-DATABASE_URI = "mysql+mysqlclient://root:@localhost/kelan"
 
 # Configuração da conexão com o banco de dados
 config = {
@@ -28,15 +21,9 @@ config = {
 }
 
 # Função para buscar dados do banco
-#def fetch_data():
-#    engine = create_engine(DATABASE_URI)
-#    query = "SELECT * FROM api_kelan_mlb ORDER BY date_created ASC"
-#    df = pd.read_sql(query, engine)
-#    return df
-# Função para buscar dados do banco
 def fetch_data():
     connection = mysql.connector.connect(**config)
-    query = "SELECT * FROM api_kelan_mlb ORDER BY date_created DESC"
+    query = "SELECT * FROM api_kelan_mlb ORDER BY date_created ASC"
     df = pd.read_sql(query, connection)
     connection.close()
     return df
@@ -46,22 +33,23 @@ def generate_card(row):
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
-                dbc.Col(str(row['question_id']), md=4, xs=12),
-                dbc.Col(str(row['seller_id']), md=4, xs=12, className='text-center'),
-                dbc.Col(str(row['date_created']), md=4, xs=12, className='text-right'),
+                dbc.Col(str(row['question_id'])),
+                dbc.Col(str(row['seller_id']), className='text-center'),
+                dbc.Col(str(row['date_created']), className='text-right'),
             ]),
             html.Hr(),
             dbc.Row([
-                dbc.Col(str(row['item_id']), md=6, xs=12),
-                dbc.Col(str(row['itemName']), md=6, xs=12, className='text-center'),
+                dbc.Col(str(row['item_id'])),
+                dbc.Col(str(row['itemName']), className='text-center'),
             ]),
             html.Hr(),
-            dbc.Col(str(row['item_Description']), md=12),
+            dbc.Col(str(row['item_Description'])),
             html.Hr(),
-            dbc.Col(str(row['question_text']), md=12),
+            dbc.Col(str(row['question_text'])),
             html.Hr(),
-            dbc.Col(str(row['response_json']), md=12),
+            dbc.Col(str(row['response_json'])),
         ],style={'font-size': '15px'})
+    #], className='bg-dark text-white mb-3')
     ], className='bg-dark text-white mb-3', style={'border': '1px solid white', 'padding': '10px', 'margin': '10px', 'color': 'white'})
 
 
@@ -121,10 +109,12 @@ app.layout = html.Div([
         dbc.Col([
             dbc.Card(
                 [
-                    html.Img(src=app.get_asset_url('logo_kelan2.png'), className="img-fluid", style={"display": "flex", "justify-content": "center"}),
+                    html.Img(src=app.get_asset_url('logo_kelan2.png'),style={"display": "flex", "justify-content": "center","lenght":"50%", "width":"70%"}),
+            
                     html.Hr(),
+                    
                 ], style={"margin": "20px", "padding": "20px", "height": "84vh"})
-        ], md=3, xs=12),
+        ], md=3),
         dbc.Col([
             dbc.Row([
                 dbc.Card([
@@ -150,7 +140,7 @@ app.layout = html.Div([
                         
                     ],style={'width': '98%'}),
                 ])
-            ], md=9, xs=12),
+            ]),
             
             ]),
         ])

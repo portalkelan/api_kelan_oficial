@@ -111,7 +111,7 @@ app.layout = html.Div([
         dbc.Col([
             dbc.Card(
                 [
-                    html.Img(src=app.get_asset_url('logo_kelan2.png'), className="img-fluid", style={"display": "flex", "justify-content": "center"}),
+                    html.Img(src=app.get_asset_url('../assets/img1.jpg'), className="img-fluid", style={"display": "flex", "justify-content": "center"}),
                     html.Hr(),
                 ], style={"margin": "20px", "padding": "20px", "height": "84vh"})
         ], md=3, xs=12),

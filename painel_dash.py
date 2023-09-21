@@ -12,9 +12,6 @@ import plotly.graph_objects as go
 from dash_bootstrap_templates import ThemeSwitchAIO
 import mysql.connector
 from sqlalchemy import create_engine
-import pywhatkit
-
-
 
 # Configuração da conexão com o banco de dados
 DATABASE_URI = "mysql+mysqlclient://root:@localhost/kelan"
@@ -27,13 +24,6 @@ config = {
     'database': 'kelan'
 }
 
-# Função para buscar dados do banco
-#def fetch_data():
-#    engine = create_engine(DATABASE_URI)
-#    query = "SELECT * FROM api_kelan_mlb ORDER BY date_created ASC"
-#    df = pd.read_sql(query, engine)
-#    return df
-# Função para buscar dados do banco
 def fetch_data():
     connection = mysql.connector.connect(**config)
     query = "SELECT * FROM api_kelan_mlb ORDER BY date_created DESC"
@@ -154,7 +144,6 @@ app.layout = html.Div([
             
             ]),
         ])
-#, style={"display": "flex", "justify-content": "top"}
 #============ Call Backs ===============
 # Callback para atualizar os dados quando o botão for clicado
 @app.callback(
@@ -167,9 +156,6 @@ def update_data(n):
 
     df = fetch_data()
     return [generate_card(row) for _, row in df.iterrows()]
-
-
-
 
 #================ Run Server ==============
 if __name__=="__main__":

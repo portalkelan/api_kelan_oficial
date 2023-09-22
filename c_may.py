@@ -72,7 +72,7 @@ def process_data(itemName, question_data):
     itemDescription = item['itemData']['plain_text']
     print(itemDescription)
     
-    link_reclamaçao= ''
+    link_reclamaçao= 'myaccount.mercadolivre.com.br/my_purchases/list'
 
 ## CHAT FORMULA RESPOSTA 
     temperature = 0

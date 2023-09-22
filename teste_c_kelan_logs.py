@@ -16,7 +16,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI (substitua pelo método seguro)
+openai.api_key = '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'  # Sua chave da API OpenAI (substitua pelo método seguro)
 
 previous_question_id = ""
 queue = []

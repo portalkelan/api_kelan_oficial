@@ -11,8 +11,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash_bootstrap_templates import ThemeSwitchAIO
 import mysql.connector
+from sqlalchemy import create_engine
 
 # Configuração da conexão com o banco de dados
+DATABASE_URI = "mysql+mysqlclient://root:@localhost/kelan"
 config = {
     'host': 'localhost',
     'user': 'root',
@@ -20,133 +22,101 @@ config = {
     'database': 'kelan'
 }
 
-# Função para buscar dados do banco
 def fetch_data():
     connection = mysql.connector.connect(**config)
-    query = "SELECT * FROM api_kelan_mlb ORDER BY date_created ASC"
+    query = "SELECT * FROM api_kelan_mlb, api_may_mlb ORDER BY date_created DESC"
     df = pd.read_sql(query, connection)
     connection.close()
     return df
 
-# Função para criar um card para cada linha do DataFrame
 def generate_card(row):
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
-                dbc.Col(str(row['question_id'])),
-                dbc.Col(str(row['seller_id']), className='text-center'),
-                dbc.Col(str(row['date_created']), className='text-right'),
+                dbc.Col(str(row['question_id']), md=4, xs=12),
+                dbc.Col(str(row['seller_id']), md=4, xs=12, className='text-center'),
+                dbc.Col(str(row['date_created']), md=4, xs=12, className='text-right'),
             ]),
             html.Hr(),
             dbc.Row([
-                dbc.Col(str(row['item_id'])),
-                dbc.Col(str(row['itemName']), className='text-center'),
+                dbc.Col(str(row['item_id']), md=6, xs=12),
+                dbc.Col(str(row['itemName']), md=6, xs=12, className='text-center'),
             ]),
             html.Hr(),
-            dbc.Col(str(row['item_Description'])),
+            dbc.Col(str(row['item_Description']), md=12),
             html.Hr(),
-            dbc.Col(str(row['question_text'])),
+            dbc.Col(str(row['question_text']), md=12),
             html.Hr(),
-            dbc.Col(str(row['response_json'])),
+            dbc.Col(str(row['response_json']), md=12),
         ],style={'font-size': '15px'})
-    #], className='bg-dark text-white mb-3')
     ], className='bg-dark text-white mb-3', style={'border': '1px solid white', 'padding': '10px', 'margin': '10px', 'color': 'white'})
 
+def generate_tab_content():
+    return dbc.Card([
+        html.Div([
+            html.H4('Dashboard Kelan Móveis', style={'display': 'inline-block'}),
+            html.Button('Atualizar', id='update-button', style={'align': 'left','width': '10%'}),
+            html.Div(id='cards-container', children=[
+                generate_card(row) for _, row in df.iterrows()
+            ], style={'overflowY': 'scroll', 'height': '38vh', 'padding': '10px'}),
+            html.Div([
+                html.H4('Quantidade de Dados'),
+                html.Div(f'Total de registros: {len(df)}')
+            ])
+        ], style={'padding': '20px'})
+    ], style={'width': '98%'})
 
 template_theme1 = "quartz"
 template_theme2 = "zephyr"
 url_theme1 = dbc.themes.QUARTZ
 url_theme2 = dbc.themes.ZEPHYR
-
-search_bar = dbc.Row(
-    [
-        dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(
-           ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2]),
-            width="auto",
-        ),
-    ],
-    className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
-    align="center",
-)
 PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
 
 app = dash.Dash(__name__)
 server = app.server
-
 df = fetch_data()
-#==================== Layout ====================
+
 app.layout = html.Div([
-        dbc.Navbar(
-        html.Div(
-            [
-                html.A(
-                    # Use row and col to control vertical alignment of logo / brand
-                    dbc.Row(
-                        [
-                            dbc.Col([
-                                dbc.Row(html.Img(src=PLOTLY_LOGO, height="50px", style={'align':'left'})),
-                            ]),
-                            dbc.Col([
-                                dbc.Row(dbc.NavbarBrand("Dashboard para análise"), style={'height':'20%'}),
-                            ]),
-                            dbc.Col(
-                                ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2]),
-                                    width="auto",
-                            ),
-                        ],
+    dbc.Navbar(
+        html.Div([
+            html.A(
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Row(html.Img(src=PLOTLY_LOGO, height="50px", style={'align':'left'})),
+                    ]),
+                    dbc.Col([
+                        dbc.Row(dbc.NavbarBrand("Dashboard para análise"), style={'height':'20%'}),
+                    ]),
+                    dbc.Col(
+                        ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2]),
+                        width="auto",
                     ),
-                    href="",
-                    style={"textDecoration": "none"},
-                ),
-                
-            ],style={'align':'left'},
-        ),
+                ]),
+                href="",
+                style={"textDecoration": "none"},
+            ),
+        ],style={'align':'left'}),
         color="dark",
-    dark=True,
+        dark=True,
     ),
     dbc.Row([
         dbc.Col([
-            dbc.Card(
-                [
-                    html.Img(src=app.get_asset_url('logo_kelan2.png'),style={"display": "flex", "justify-content": "center","lenght":"50%", "width":"70%"}),
-            
-                    html.Hr(),
-                    
-                ], style={"margin": "20px", "padding": "20px", "height": "84vh"})
-        ], md=3),
+            dbc.Card([
+                html.Img(src=app.get_asset_url('../assets/img1.jpg'), className="img-fluid", style={"display": "flex", "justify-content": "center"}),
+                html.Hr(),
+            ], style={"margin": "20px", "padding": "20px", "height": "84vh"})
+        ], md=3, xs=12),
         dbc.Col([
             dbc.Row([
-                dbc.Card([
-                html.H4("Menu Principal"),
-                html.Div(html.Button('Atualizar', id='update-button', style={'align': 'left','width': '10%'}))
-                
-                ], style={"margin": "20px", "padding": "20px",'width': '96%'}),
-                dbc.Card([
-                        html.Div([
-                        html.H4('Dashboard Kelan Móveis', style={'display': 'inline-block'}),
-                        
-                        # Cards
-                        html.Div(id='cards-container', children=[
-                            generate_card(row) for _, row in df.iterrows()
-                        ], style={'overflowY': 'scroll', 'height': '38vh', 'padding': '10px'}),
-                        
-                        # Dashboards
-                        html.Div([
-                            html.H4('Quantidade de Dados'),
-                            html.Div(f'Total de registros: {len(df)}')
-                            ])
-                        ], style={'padding': '20px'})
-                        
-                    ],style={'width': '98%'}),
+                dbc.Tabs([
+                    dbc.Tab(generate_tab_content(), label="Aba 1"),
+                    dbc.Tab(generate_tab_content(), label="Aba 2")
                 ])
-            ]),
-            
-            ]),
-        ])
-#, style={"display": "flex", "justify-content": "top"}
-#============ Call Backs ===============
-# Callback para atualizar os dados quando o botão for clicado
+            ])
+        ], md=9, xs=12),
+    ]),
+])
+
 @app.callback(
     Output('cards-container', 'children'),
     Input('update-button', 'n_clicks')
@@ -154,14 +124,8 @@ app.layout = html.Div([
 def update_data(n):
     if n is None:
         raise dash.exceptions.PreventUpdate
-
     df = fetch_data()
     return [generate_card(row) for _, row in df.iterrows()]
 
-
-
-
-#================ Run Server ==============
 if __name__=="__main__":
     app.run_server(debug=True, port=8050, host='172.20.20.33')
-

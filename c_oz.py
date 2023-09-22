@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -107,7 +107,7 @@ def process_data(itemName, question_data):
             print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
 
 ## GUARDA AS CHAVES NO BANCO DE DADOS
-        insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
+        '''insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
 
 def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply):
     try:
@@ -125,7 +125,7 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
         if con.is_connected():
             cursor.close()
             con.close()
-            print("Conexão com o MySQL encerrada")
+            print("Conexão com o MySQL encerrada")'''
 
 
 ## LOOP 5 EM 5 MINUTOS

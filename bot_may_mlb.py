@@ -1,31 +1,34 @@
+import openai
+from datetime import datetime
+from botcity.core import DesktopBot
+import json
 import logging
 import mysql.connector
 from mysql.connector import Error
 import requests
-import openai
-import json
 import time
-from datetime import datetime
 
 # Configuração do logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Função para converter a notação da hora para o padrão brasileiro
 def converter_formato_com_hora(data_iso):
     data_objeto = datetime.fromisoformat(data_iso)
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI (substitua pelo método seguro)
+# Configuração da OpenAI
+openai.api_key = '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'
 
+# Funções do segundo documento
 previous_question_id = ""
 queue = []
 
 def fetch_data_to_queue():
     global previous_question_id
-
-    # NOME DO ITEM/ANÚNCIO
-    url = 'https://kelanapi.azurewebsites.net/kelan/name/title'
+        # NOME DO ITEM/ANÚNCIO
+    url = 'https://kelanapi.azurewebsites.net/may/name/title'
     response = requests.post(url, timeout=60)
     if response.status_code != 200:
         logger.error(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
@@ -35,7 +38,7 @@ def fetch_data_to_queue():
     itemName = Name['newItemData']['title']
 
     # PERGUNTA
-    url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
+    url = 'https://kelanapi.azurewebsites.net/may/message/question'
     response = requests.post(url, timeout=60)
     if response.status_code != 200:
         logger.error(f"Erro ao chamar a API (Pergunta): {response.status_code} - {response.text}")
@@ -62,7 +65,7 @@ def process_data(itemName, question_data):
     date_created = converter_formato_com_hora(question_data['questionData']['date_created'])
 
     # DESCRIÇÃO DO ANÚNCIO 
-    url = 'https://kelanapi.azurewebsites.net/kelan/items/info'
+    url = 'https://kelanapi.azurewebsites.net/may/items/info'
     response = requests.post(url, timeout=60)
     if response.status_code != 200:
         logger.error(f"Erro ao chamar a API (Descrição do item): {response.status_code} - {response.text}")
@@ -78,7 +81,7 @@ def process_data(itemName, question_data):
     temperature = 0
     max_tokens = 256
     messages = [
-        {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja KELAN MOVEIS na plataforma Mercado Livre, você é a Kel, assistente virtual da KELAN MOVEIS. Ao final de mensagem, escreva: Att, Kel Equipe KELAN MOVEIS. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
+   {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja MAY STORE na plataforma Mercado Livre, você é a May, assistente virtual da MAY STORE. Ao final de mensagem, escreva: Att, May Equipe MAY STORE. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
     ]
     message = question_text
     logger.info(f"Message: {message}")
@@ -100,7 +103,7 @@ def process_data(itemName, question_data):
         response_dict = {"/": reply}
 
         # POSTA A RESPOSTA NO MELI
-        url = 'https://kelanapi.azurewebsites.net/kelan/chat'
+        url = 'https://kelanapi.azurewebsites.net/may/chat'
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, data=json.dumps(response_dict), headers=headers, timeout=60)
         if response.status_code == 200:
@@ -116,7 +119,7 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
         con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
-            query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT IGNORE INTO api_may_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
             cursor.execute(query, values)
             con.commit()
@@ -129,8 +132,19 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
             con.close()
             logger.info("Conexão com o MySQL encerrada")
 
-while True:
-    logger.info("Buscando perguntas...")
-    fetch_data_to_queue()
-    process_queue()
-    time.sleep(300)
+# Classe Bot do primeiro documento
+class Bot(DesktopBot):
+    def action(self, execution=None):
+        logger.info("buscando perguntas...")
+        fetch_data_to_queue()
+        process_queue()
+
+    def not_found(self, label):
+        print(f"Element not found: {label}")
+
+# Loop principal do primeiro documento
+if __name__ == '__main__':
+    while True:
+        Bot.main()
+        logger.info("entrou no loop depois de iniciar")
+        time.sleep(300)

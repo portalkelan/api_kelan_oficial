@@ -19,7 +19,7 @@ def converter_formato_com_hora(data_iso):
     return data_br
 
 # Configuração da OpenAI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Funções do segundo documento
 previous_question_id = ""

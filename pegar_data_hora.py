@@ -5,7 +5,9 @@ def get_current_datetime():
     now = datetime.now()
 
     # Formate a data e hora no formato apropriado para o MySQL
-    formatted_now = now.strftime('%Y-%m-%d %H:%M:%S')
+    formatted_now = now.strftime('%H:%M:%S')
 
     return formatted_now
+
+get_current_datetime()
 

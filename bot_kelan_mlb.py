@@ -19,7 +19,7 @@ def converter_formato_com_hora(data_iso):
     return data_br
 
 # Configuração da OpenAI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Funções do segundo documento
 previous_question_id = ""
@@ -28,7 +28,7 @@ queue = []
 def fetch_data_to_queue():
     global previous_question_id
         # NOME DO ITEM/ANÚNCIO
-    url = 'https://kelanapi.azurewebsites.net/decorhome/name/title'
+    url = 'https://kelanapi.azurewebsites.net/kelan/name/title'
     response = requests.post(url, timeout=60)
     if response.status_code != 200:
         logger.error(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
@@ -38,7 +38,7 @@ def fetch_data_to_queue():
     itemName = Name['newItemData']['title']
 
     # PERGUNTA
-    url = 'https://kelanapi.azurewebsites.net/decorhome/message/question'
+    url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
     response = requests.post(url, timeout=60)
     if response.status_code != 200:
         logger.error(f"Erro ao chamar a API (Pergunta): {response.status_code} - {response.text}")
@@ -65,7 +65,7 @@ def process_data(itemName, question_data):
     date_created = converter_formato_com_hora(question_data['questionData']['date_created'])
 
     # DESCRIÇÃO DO ANÚNCIO 
-    url = 'https://kelanapi.azurewebsites.net/decorhome/items/info'
+    url = 'https://kelanapi.azurewebsites.net/kelan/items/info'
     response = requests.post(url, timeout=60)
     if response.status_code != 200:
         logger.error(f"Erro ao chamar a API (Descrição do item): {response.status_code} - {response.text}")
@@ -81,7 +81,7 @@ def process_data(itemName, question_data):
     temperature = 0
     max_tokens = 256
     messages = [
-         {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja DECORE HOME na plataforma Mercado Livre, você é o Deco, assistente virtual da DECORE HOME. Ao final de mensagem, escreva: Att, Deco Equipe DECORE HOME. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. NÃO RESPONDA A PERGUNTAS SOBRE OS PREÇOS DOS ITENS, PEÇA AO CLIENTE PARA CONFERIR NO ANÚNCIO. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
+        {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja KELAN MOVEIS na plataforma Mercado Livre, você é a Kel, assistente virtual da KELAN MOVEIS. Ao final de mensagem, escreva: Att, Kel Equipe KELAN MOVEIS. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
     ]
     message = question_text
     logger.info(f"Message: {message}")
@@ -103,24 +103,25 @@ def process_data(itemName, question_data):
         response_dict = {"/": reply}
 
         # POSTA A RESPOSTA NO MELI
-    if seller_id == 271839457:
-            # POSTA A RESPOSTA NO MELI
-            url = 'https://kelanapi.azurewebsites.net/decorhome/chat'
-            headers = {'Content-Type': 'application/json'}
-            response = requests.post(url, data=json.dumps(response_dict), headers=headers)
-            if response.status_code == 200:
-                print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
+    if seller_id == 65131481:
+        # POSTA A RESPOSTA NO MELI
+        url = 'https://kelanapi.azurewebsites.net/kelan/chat'
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, data=json.dumps(response_dict), headers=headers)
+        if response.status_code == 200:
+            print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
     else:
-            print("Execução interrompida")
+        print("Execução interrompida")
+
         # GUARDA AS CHAVES NO BANCO DE DADOS
-    insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
+        insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
 
 def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply):
     try:
         con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
-            query = "INSERT IGNORE INTO api_decorhome_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
             cursor.execute(query, values)
             con.commit()

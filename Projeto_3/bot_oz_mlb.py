@@ -81,7 +81,7 @@ def process_data(itemName, question_data):
     temperature = 0
     max_tokens = 256
     messages = [
-         {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja OZ SHOP na plataforma Mercado Livre, você é o Ozzy, assistente virtual da OZ SHOP. Ao final de mensagem, escreva: Att, Ozzy Equipe OZ SHOP. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
+         {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja OZ SHOP na plataforma Mercado Livre, você é o Ozzy, assistente virtual da OZ SHOP. Ao final de mensagem, escreva: Att, Ozzy Equipe OZ SHOP. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. NÃO RESPONDA A PERGUNTAS SOBRE OS PREÇOS DOS ITENS, PEÇA AO CLIENTE PARA CONFERIR NO ANÚNCIO. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
     ]
     message = question_text
     logger.info(f"Message: {message}")
@@ -103,14 +103,15 @@ def process_data(itemName, question_data):
         response_dict = {"/": reply}
 
         # POSTA A RESPOSTA NO MELI
+    if seller_id == 20020278:
+        # POSTA A RESPOSTA NO MELI
         url = 'https://kelanapi.azurewebsites.net/oz/chat'
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, data=json.dumps(response_dict), headers=headers, timeout=60)
+        response = requests.post(url, data=json.dumps(response_dict), headers=headers)
         if response.status_code == 200:
-            logger.info(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
-        else:
-            logger.error(f'Erro ao postar resposta: {response.status_code} - {response.text}')
-
+            print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
+    else:
+        print("Execução interrompida")
         # GUARDA AS CHAVES NO BANCO DE DADOS
         insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
 

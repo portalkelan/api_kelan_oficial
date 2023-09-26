@@ -103,14 +103,15 @@ def process_data(itemName, question_data):
         response_dict = {"/": reply}
 
         # POSTA A RESPOSTA NO MELI
+    if seller_id == 20020278:
+        # POSTA A RESPOSTA NO MELI
         url = 'https://kelanapi.azurewebsites.net/oz/chat'
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, data=json.dumps(response_dict), headers=headers, timeout=60)
+        response = requests.post(url, data=json.dumps(response_dict), headers=headers)
         if response.status_code == 200:
-            logger.info(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
-        else:
-            logger.error(f'Erro ao postar resposta: {response.status_code} - {response.text}')
-
+            print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
+    else:
+        print("Execução interrompida")
         # GUARDA AS CHAVES NO BANCO DE DADOS
         insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
 

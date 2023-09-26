@@ -8,8 +8,6 @@ import mysql.connector
 from mysql.connector import Error
 import time
 
-link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
-
 # Configuração do logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -22,45 +20,51 @@ def converter_formato_com_hora(data_iso):
 
 openai.api_key = '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'
 
+link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
+
 # Funções do segundo documento
 previous_question_id = ""
 queue = []
 
 ## FAZ A CHAMADA PARA O SERVIDOR E PEGA O JSON COM TODAS AS INFORMAÇÕES:
+global postagem
+postagem = {
+    '65131481':'https://kelanapi.azurewebsites.net/kelan/chat', '271842978':'https://kelanapi.azurewebsites.net/may/chat', '20020278':'https://kelanapi.azurewebsites.net/oz/chat', '65131481':'https://kelanapi.azurewebsites.net/decorhome/chat'
+    }
 
-url = 'https://testeappi.azurewebsites.net/oz/info/info'
-response = requests.post(url)
+def fetch_data_to_queue():
+    global previous_question_id
+    url = 'https://testeappi.azurewebsites.net/oz/info/info'
+    response = requests.post(url, timeout=60)
 
-if response.status_code != 200:
-    print(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
-else:
-    # Transforma o conteúdo da resposta em um objeto JSON (dicionário ou lista)
-    data = response.json()
+    if response.status_code != 200:
+        logger.error(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
+    else:
+        # Transforma o conteúdo da resposta em um objeto JSON (dicionário ou lista)
+        data = response.json()
 
-    ##SEPARANDO OS DADOS 
+        ##SEPARANDO OS DADOS 
 
-    seller_id = data['allInfo']['seller_id']
-    questionId = data['allInfo']['questionId']
-    itemName = data['allInfo']['itemName']
-    itemId = data['allInfo']['itemId']
-    date_created = data['allInfo']['date_created']
-    question_text = data['allInfo']['question_text']
-    foi_respondida = data['allInfo']['foi_respondida']
-    itemDescription = data['allInfo']['itemDescription']
+        seller_id = data['allInfo']['seller_id']
+        question_id = data['allInfo']['questionId']
+        itemName = data['allInfo']['itemName']
+        item_id = data['allInfo']['itemId']
+        date_created = data['allInfo']['date_created']
+        date_created = converter_formato_com_hora(['allInfo']['date_created'])
+        question_text = data['allInfo']['question_text']
+        foi_respondida = data['allInfo']['foi_respondida']
+        itemDescription = data['allInfo']['itemDescription']
 
-    print(f"Conta:{seller_id}")
-    print(f"Question ID:{questionId}")
-    print(f"Anúncio: {itemName}")
-    print(f"Item ID: {itemId}")
-    print(f"Data/Hora: {date_created}")
-    print(f"Pergunta: {question_text}")
-    print(f"Status: {foi_respondida}")
-    print(f"Descrição: {itemDescription}")
+        print(f"Conta:{seller_id}")
+        print(f"Question ID:{question_id}")
+        print(f"Anúncio: {itemName}")
+        print(f"Item ID: {item_id}")
+        print(f"Data/Hora: {date_created}")
+        print(f"Pergunta: {question_text}")
+        print(f"Status: {foi_respondida}")
+        print(f"Descrição: {itemDescription}")
 
-
-
-## CHAT FORMULA RESPOSTA
-
+    ## CHAT FORMULA RESPOSTA
     temperature = 0
     max_tokens = 256
     messages = [
@@ -80,13 +84,45 @@ else:
             max_tokens=max_tokens
         )
         reply = chat.choices[0].message.content
-        print(f"ChatGPT: {reply}")
+        logger.info(f"ChatGPT: {reply}")
         messages.append({"role": "assistant", "content": reply})
 
         response_dict = {"/": reply}
 
+        # POSTA A RESPOSTA NO MELI
+        url = (postagem)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, data=json.dumps(response_dict), headers=headers, timeout=60)
+        if response.status_code == 200:
+            logger.info(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
+        else:
+            logger.error(f'Erro ao postar resposta: {response.status_code} - {response.text}')
+
+        # GUARDA AS CHAVES NO BANCO DE DADOS
+        insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida)
+
+### Conexão e inserir no banco
+def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida):
+    try:
+        con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
+        if con.is_connected():
+            cursor = con.cursor()
+            query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida)
+            cursor.execute(query, values)
+            con.commit()
+            logger.info(f"{cursor.rowcount} Registro inserido.")
+    except Error as e:
+        logger.error(f"Erro ao conectar ao MySQL: {e}")
+    finally:
+        if con.is_connected():
+            cursor.close()
+            con.close()
+            logger.info("Conexão com o MySQL encerrada")
+
+
     ##CONECTAR COM O BANCO DE DADOS
     ## CRIAR O SISTEMA DE FILA
     ## CRIAR OS LOOPS
-    '''CRIAR A FUNÇÃO: if SELLER_ID = X postar em https://testeappi.azurewebsites.net/oz/chat
-                    if SELLER_ID = Y postar em https://testeappi.azurewebsites.net/kelan/chat (...)'''
+    '''CRIAR A FUNÇÃO: if SELLER_ID = X postar em https://kelanapi.azurewebsites.net/oz/chat
+                    if SELLER_ID = Y postar em https://kelanapi.azurewebsites.net/kelan/chat (...)'''

@@ -41,18 +41,18 @@ def process():
         data = response.json()
         ##SEPARANDO OS DADOS 
         seller_id = data['allInfo']['seller_id']
-        question_id = data['allInfo']['questionId']
-        itemName = data['allInfo']['itemName']
-        item_id = data['allInfo']['itemId']
+        questionId = data['allInfo']['questionId']
+        itemName = data['allInfo']['item_name']
+        itemId = data['allInfo']['itemId']
         date_created = data['allInfo']['date_created']
         question_text = data['allInfo']['question_text']
         foi_respondida = data['allInfo']['foi_respondida']
         itemDescription = data['allInfo']['itemDescription']
 
         print(f"Conta:{seller_id}")
-        print(f"Question ID:{question_id}")
+        print(f"Question ID:{questionId}")
         print(f"Anúncio: {itemName}")
-        print(f"Item ID: {item_id}")
+        print(f"Item ID: {itemId}")
         print(f"Data/Hora: {date_created}")
         print(f"Pergunta: {question_text}")
         print(f"Status: {foi_respondida}")
@@ -88,7 +88,7 @@ def process():
         messages.append({"role": "assistant", "content": reply})
         response_dict = {"/": reply}
 
-    insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida)
+    insert_into_database(questionId, seller_id, date_created, itemId, question_text, itemName, itemDescription, reply, foi_respondida)
 
     # POSTA A RESPOSTA NO MELI
     url = (postagem)
@@ -105,13 +105,13 @@ perguntas_descartadas = []
 # GUARDA AS CHAVES NO BANCO DE DADOS
     
 ### Conexão e inserir no banco
-def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida):
+def insert_into_database(questionId, seller_id, date_created, itemId, question_text, itemName, itemDescription, reply, foi_respondida):
     try:
         con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
             query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida)
+            values = (questionId, seller_id, date_created, itemId, question_text, itemName, itemDescription, reply, foi_respondida)
             cursor.execute(query, values)
             con.commit()
             logger.info(f"{cursor.rowcount} Registro inserido.")

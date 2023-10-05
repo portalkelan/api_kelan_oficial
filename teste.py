@@ -6,13 +6,17 @@ from collections import deque
 import logging
 import mysql.connector
 from mysql.connector import Error
+from flask import Flask, request, jsonify
+import threading
+
+app = Flask(__name__)
 
 # Configuração do Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -20,14 +24,24 @@ link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
 request_queue = deque()
 processed_questions = set()
 
+data = {}  # Inicializando 'data' como um dicionário vazio
+url = data
+@app.route('/data', methods=['POST'])
+def receive_data():
+    global data
+    data = request.json  # Armazenando o JSON completo na variável 'data'
+    print(data)
+    return jsonify(data=data), 200
+
 def fetch_and_process_data():
     logging.info("Buscando perguntas...")
-    url = 'https://kelanapi.azurewebsites.net/kelan/info/info'
+    #url = 'https://kelanapi.azurewebsites.net/kelan/info/info'
+    #url = request.json
+    
     try:
-        response = requests.post(url)
-        response.raise_for_status()
-
-        data = response.json()
+        #response = requests.post(url)
+        #response.raise_for_status()
+        #data = response.json()
 
         seller_id = data['allInfo']['seller_id']
         question_id = data['allInfo']['questionId']
@@ -149,9 +163,19 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
             con.close()
             logger.info("Conexão com o MySQL encerrada")
 
-while True:
-    request_queue.append({})
-    if request_queue:
-        fetch_and_process_data()
-        request_queue.popleft()
-    time.sleep(180)
+def loop_function():
+    while True:
+        request_queue.append({})
+        if request_queue:
+            fetch_and_process_data()
+            request_queue.popleft()
+        time.sleep(150)
+    
+# Crie uma thread para o loop
+loop_thread = threading.Thread(target=loop_function)
+
+# Inicie a thread do loop
+loop_thread.start()
+
+# Inicie o servidor Flask na thread principal
+app.run(debug=False, port=8050, host='172.20.20.33')

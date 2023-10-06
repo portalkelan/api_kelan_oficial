@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -24,12 +24,14 @@ link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
 request_queue = deque()
 processed_questions = set()
 
+data = {}  # Inicializando 'data' como um dicionário vazio
+url = data
 @app.route('/data', methods=['POST'])
 def receive_data():
     global data
     data = request.json  # Armazenando o JSON completo na variável 'data'
     print(data)
-    return '', 200
+    return jsonify(data=data), 200
 
 def fetch_and_process_data():
     logging.info("Buscando perguntas...")

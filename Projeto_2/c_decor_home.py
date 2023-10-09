@@ -13,7 +13,7 @@ def converter_formato_com_hora(data_iso):
     data_br = data_objeto.strftime('%d/%m/%y %H:%M:%S')
     return data_br
 
-openai.api_key = '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'  # Sua chave da API OpenAI
+openai.api_key = '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'  # Sua chave da API OpenAI
 
 ## Cria o sistema de fila a partir do id da pergunta
 previous_question_id = ""
@@ -24,27 +24,17 @@ def fetch_data_to_queue():
     global previous_question_id
 
 ##  NOME DO ITEM/ANÚNCIO
-    url = 'https://kelanapi.azurewebsites.net/kelan/name/title'
+    url = 'https://kelanapi.azurewebsites.net/decorhome/name/title'
     response = requests.post(url)
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
         return
-    
+
     Name = response.json()
     itemName = Name['newItemData']['title']
 
-    ##  NOME DO ITEM/ANÚNCIO
-    url = 'https://kelanapi.azurewebsites.net/kelan/name/title'
-    response = requests.post(url)
-    if response.status_code != 200:
-        print(f"Erro ao chamar a API (Nome do item): {response.status_code} - {response.text}")
-        return
-
-    Name_may = response.json()
-    itemName_may = Name['newItemData']['title']
-
 ##  PERGUNTA
-    url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
+    url = 'https://kelanapi.azurewebsites.net/decorhome/message/question'
     response = requests.post(url)
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Pergunta): {response.status_code} - {response.text}")
@@ -56,25 +46,12 @@ def fetch_data_to_queue():
         queue.append((itemName, question_data))
         previous_question_id = question_data['questionData']['id']
 
-    ##  PERGUNTA
-    url = 'https://kelanapi.azurewebsites.net/kelan/message/question'
-    response = requests.post(url)
-    if response.status_code != 200:
-        print(f"Erro ao chamar a API (Pergunta): {response.status_code} - {response.text}")
-        return
-
-    question_data_may = response.json()
-
-    if question_data['questionData']['id'] != previous_question_id:
-        queue.append((itemName, question_data))
-        previous_question_id_may = question_data['questionData']['id']
-
 def process_queue():
     if not queue:
         return
 
-    itemName, question_data, itemName_may,question_data_may = queue.pop(0)
-    process_data(itemName, question_data,itemName_may,question_data_may)
+    itemName, question_data = queue.pop(0)
+    process_data(itemName, question_data)
 
 ## Separa as chaves que serão usadas para formular resposta ou guardar no banco de dados
 def process_data(itemName, question_data):
@@ -85,7 +62,7 @@ def process_data(itemName, question_data):
     date_created = converter_formato_com_hora(question_data['questionData']['date_created'])
 
 ## DESCRIÇÃO DO ANÚNCIO 
-    url = 'https://kelanapi.azurewebsites.net/kelan/items/info'
+    url = 'https://kelanapi.azurewebsites.net/decorhome/items/info'
     response = requests.post(url)
     if response.status_code != 200:
         print(f"Erro ao chamar a API (Descrição do item): {response.status_code} - {response.text}")
@@ -95,11 +72,13 @@ def process_data(itemName, question_data):
     itemDescription = item['itemData']['plain_text']
     print(itemDescription)
 
+    link_reclamaçao = 'https://myaccount.mercadolivre.com.br/my_purchases/list'
+
 ## CHAT FORMULA RESPOSTA 
     temperature = 0
     max_tokens = 256
     messages = [
-        {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja Kelan Móveis na plataforma Mercado Livre, você é a Kel, assistente virtual da Kelan. Ao final de mensagem, escreva: Att, Kel Equipe Kelan. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre ou pelas nossas redes sociais, será um prazer ajudá-lo!' Caso o cliente não consiga entrar em contato através das mensagens, explique: Infelizmente, de acordo com as regras da plataforma, não podemos direcioná-lo para nossos canais de atendimento, o que você pode fazer é pesquisar nosso nome afim de nos encontrar em outros canais. Não responda perguntas sobre preços, não invente respostas, siga as informações do catalogo e descrição à risca! Catalogo: {itemDescription}"}
+         {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja DECORE HOME na plataforma Mercado Livre, você é o Deco, assistente virtual da DECORE HOME. Ao final de mensagem, escreva: Att, Deco Equipe DECORE HOME. Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
     ]
     message = question_text
     print(f"Message: {message}")
@@ -113,7 +92,6 @@ def process_data(itemName, question_data):
             temperature=temperature,
             max_tokens=max_tokens
         )
-        global reply
         reply = chat.choices[0].message.content
         print(f"ChatGPT: {reply}")
         messages.append({"role": "assistant", "content": reply})
@@ -121,14 +99,14 @@ def process_data(itemName, question_data):
         response_dict = {"/": reply}
 
 ## POSTA A RESPOSTA NO MELI
-        url = 'https://kelanapi.azurewebsites.net/kelan/chat'
+        url = 'https://kelanapi.azurewebsites.net/decorhome/chat'
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, data=json.dumps(response_dict), headers=headers)
         if response.status_code == 200:
             print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
 
 ## GUARDA AS CHAVES NO BANCO DE DADOS
-        insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
+        '''insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply)
 
 def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply):
     try:
@@ -146,7 +124,7 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
         if con.is_connected():
             cursor.close()
             con.close()
-            print("Conexão com o MySQL encerrada")
+            print("Conexão com o MySQL encerrada")'''
 
 
 ## LOOP 5 EM 5 MINUTOS
@@ -154,4 +132,4 @@ while True:
     print("buscando perguntas...")  # Mensagem informando que está buscando perguntas
     fetch_data_to_queue()
     process_queue()
-    time.sleep(1500)
+    time.sleep(3000)

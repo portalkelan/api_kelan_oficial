@@ -2,7 +2,7 @@ import requests
 import json
 import mysql.connector
 import time
-from pegar_data_hora import get_current_datetime
+from Projeto_1.pegar_data_hora import get_current_datetime
 from texto_item import process_request_and_update_db
 
 pergunta = ""

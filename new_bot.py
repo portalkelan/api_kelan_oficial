@@ -72,6 +72,15 @@ def fetch_and_process_data():
                    
             message = question_text
             print(f"Message: {message}")
+
+
+            if 'preço' in message or 'valor' in message:
+                reply = 'Olá! O preço dos produtos está identificado no próprio anúncio. Att'
+            elif 'frete' in message or 'entrega' in message or 'envio' in message:
+                reply = 'O cálculo do frete e entrega pela transportadora são responsabilidade da plataforma, portanto recomendo que entre em contato com o suporte do Meli para mais informações, ou entre em contato conosco através das mensagens para que possamos tentar resolver da melhor forma! Att'
+            elif 'full' in message:
+                reply = 'Olá! Como assistente virtual, não possuo acesso às informações sobre os envios full (um envio é full quando o produto já se encontra no centro de distribuição, e a entrega é feita pela transportadora do Meli), caso queira mais informações sobre os envios full, contate o suporte do Mercado Livre ou confira as informações do anúncio! Att'
+                
             if message:
                 messages.append(
                     {"role": "user", "content": message},

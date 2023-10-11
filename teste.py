@@ -147,7 +147,7 @@ def fetch_and_process_data():
 ### Conexão e inserir no banco
 def insert_into_database(question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida):
     try:
-        con = mysql.connector.connect(host='localhost', database='kelan', user='root', password='')
+        con = mysql.connector.connect(host='localhost', database='kelan1', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
             query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json, foi_respondida) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"

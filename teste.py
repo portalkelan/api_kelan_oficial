@@ -169,7 +169,7 @@ def loop_function():
         if request_queue:
             fetch_and_process_data()
             request_queue.popleft()
-        time.sleep(150)
+        time.sleep(120)
     
 # Crie uma thread para o loop
 loop_thread = threading.Thread(target=loop_function)

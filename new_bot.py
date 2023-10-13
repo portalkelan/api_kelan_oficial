@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -22,7 +22,7 @@ processed_questions = set()
 
 def fetch_and_process_data():
     logging.info("Buscando perguntas...")
-    url = 'https://kelanapi.azurewebsites.net/kelan/info/info'
+    url = 'https://testeappi.azurewebsites.net/kelan/info/info'
     try:
         response = requests.post(url)
         response.raise_for_status()
@@ -101,28 +101,28 @@ def fetch_and_process_data():
 
             # POSTA A RESPOSTA NO MELI
             if seller_id == oz_id:
-                        url = 'https://kelanapi.azurewebsites.net/oz/chat'
+                        url = 'https://testeappi.azurewebsites.net/oz/chat'
                         headers = {'Content-Type': 'application/json'}
                         response = requests.post(url, data= json.dumps(response_dict), headers=headers)
                         if response.status_code == 200:
                             print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
 
             elif seller_id == kelan_id: 
-                        url = 'https://kelanapi.azurewebsites.net/kelan/chat'
+                        url = 'https://testeappi.azurewebsites.net/kelan/chat'
                         headers = {'Content-Type': 'application/json'}
                         response = requests.post(url, data= json.dumps(response_dict), headers=headers)
                         if response.status_code == 200:
                             print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
 
             elif seller_id == may_id:
-                        url = 'https://kelanapi.azurewebsites.net/may/chat'
+                        url = 'https://testeappi.azurewebsites.net/may/chat'
                         headers = {'Content-Type': 'application/json'}
                         response = requests.post(url, data= json.dumps(response_dict), headers=headers)
                         if response.status_code == 200:
                             print(f'POST BEM SUCEDIDO: {response.status_code} - {response.text}')
                             
             elif seller_id == decorhome_id:  
-                        url = 'https://kelanapi.azurewebsites.net/decorhome/chat'
+                        url = 'https://testeappi.azurewebsites.net/decorhome/chat'
                         headers = {'Content-Type': 'application/json'}
                         response = requests.post(url, data= json.dumps(response_dict), headers=headers)
                         if response.status_code == 200:
@@ -145,7 +145,7 @@ def insert_into_database(question_id, seller_id, date_created, item_id, question
         con = mysql.connector.connect(host='localhost', database='kelan1', user='root', password='')
         if con.is_connected():
             cursor = con.cursor()
-            query = "INSERT IGNORE INTO api_kelan_mlb (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json, foi_respondida) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            query = "INSERT IGNORE INTO chat_db (question_id, seller_id, date_created, item_id, question_text, itemName, item_Description, response_json, foi_respondida) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             values = (question_id, seller_id, date_created, item_id, question_text, itemName, itemDescription, reply, foi_respondida)
             cursor.execute(query, values)
             con.commit()
@@ -163,4 +163,4 @@ while True:
     if request_queue:
         fetch_and_process_data()
         request_queue.popleft()
-    time.sleep(180)
+    time.sleep(150)

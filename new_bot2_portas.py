@@ -6,7 +6,7 @@ from collections import deque
 import logging
 import mysql.connector
 from mysql.connector import Error
-from flask import Flask, request, jsonify
+from flask import Flask, render_template
 import threading
 from collections import deque
 
@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -25,14 +25,9 @@ link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
 request_queue = deque()
 processed_questions = set()
 
-data = {}  # Inicializando 'data' como um dicionário vazio
-url = data
-@app.route('/data', methods=['POST'])
-def receive_data():
-    global data
-    data = request.json  # Armazenando o JSON completo na variável 'data'
-    print(data)
-    return jsonify(data=data), 200
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html'), 200
 
 def fetch_and_process_data():
     logging.info("Buscando perguntas...")

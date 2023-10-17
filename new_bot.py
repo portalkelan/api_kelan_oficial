@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -58,7 +58,7 @@ def fetch_and_process_data():
             temperature = 0
             max_tokens = 256
             messages = [
-              {"role": "system", "content":f"Atue como um profissional de atendimento ao cliente e responda as perguntas sobre os produtos da loja KELAN MOVEIS na plataforma Mercado Livre.Responda as perguntas dos clientes utilizando o catalogo como parametro de resposta. Caso a resposta para a pergunta não esteja no prompt, cole a seguinte mensagem 'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!'.RECLAMAÇÕES:'Olá, infelizmente não encontrei uma resposta para a sua pergunta nos meus dados de treinamento, por favor, entre em contato conosco através das mensagens do Mercado Livre neste link: {link_reclamaçao}, será um prazer ajudá-lo!' Horário de atendimento: Seg à Sex das 8h às 18h. Em caso de problemas com o produto, peça que o cliente não abra uma  reclamação e tente entrar em contato conosoco. Não responda perguntas sobre preços, não responda perguntas sobre as notas fiscais, não invente respostas, siga as informações da descrição à risca! NOME DO PRODUTO: {itemName}, DESCRIÇAO: {itemDescription}"}
+               {"role": "system", "content": f"Atue como atendente e responda sobre produtos de uma loja no Mercado Livre usando o catálogo: CATALOGO: {itemDescription} e NOME DO PRODUTO: {itemName} . Se não souber, responda: 'Olá, não tenho essa informação disponível no momento. Por favor, confira as informações na descrição do anúncio ou contate-nos no Mercado Livre ou redes sociais. Limite: 256 caracteres. NÃO fale sobre preços, envios full, notas fiscais. Não invente. Use o catálogo fielmente. Caso a pergunta seja uma reclamação, use este link {link_reclamaçao}"} 
             ]
 
             if seller_id == kelan_id: 

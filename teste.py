@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -178,4 +178,4 @@ loop_thread = threading.Thread(target=loop_function)
 loop_thread.start()
 
 # Inicie o servidor Flask na thread principal
-app.run(debug=False, port=8050, host='172.20.20.33')
+app.run(debug=False, port=8050, host='172.20.20.37')

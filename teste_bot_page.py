@@ -9,12 +9,67 @@ from mysql.connector import Error
 from flask import Flask, render_template
 import threading
 from collections import deque
-
-app = Flask(__name__)
+import dash
+from dash import html, dcc, Input, Output, State
+import dash_bootstrap_components as dbc
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+from dash_bootstrap_templates import ThemeSwitchAIO
+from sqlalchemy import create_engine
 
 # Configuração do Logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    handlers=[logging.FileHandler('app.log'), logging.StreamHandler()])
 logger = logging.getLogger(__name__)
+
+# Configuração da conexão com o banco de dados
+DATABASE_URI = "mysql+mysqlclient://root:@localhost/kelan"
+config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'database': 'kelan1'
+}
+
+def fetch_data():
+    try:
+        connection = mysql.connector.connect(**config)
+        if connection.is_connected():
+            logging.info("Conexão com o banco de dados estabelecida com sucesso.")
+            query = "SELECT * FROM chat_db ORDER BY date_created DESC"
+            df = pd.read_sql(query, connection)
+            logging.info(f"{len(df)} registros recuperados do banco de dados.")
+            return df
+        else:
+            logging.error("Falha ao conectar ao banco de dados.")
+            return pd.DataFrame()  # Retorna um DataFrame vazio
+    except mysql.connector.Error as err:
+        logging.error(f"Erro ao conectar ao banco de dados: {err}")
+        return pd.DataFrame()  # Retorna um DataFrame vazio
+    finally:
+        if connection.is_connected():
+            connection.close()
+            logging.info("Conexão com o banco de dados fechada.")
+
+# ========= App ============== #
+FONT_AWESOME = ["https://use.fontawesome.com/releases/v5.10.2/css/all.css"]
+dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.4/dbc.min.css"
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY, dbc_css])
+app.scripts.config.serve_locally = True
+server = app.server
+df = fetch_data()
+
+# ========== Styles ============ #
+
+template_theme1 = "pulse"
+template_theme2 = "vapor"
+url_theme1 = dbc.themes.PULSE
+url_theme2 = dbc.themes.VAPOR
+
+tab_card = {'height':'100%'}
 
 ### Chave da API Open_AI
 openai.api_key = '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'
@@ -25,10 +80,147 @@ link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
 request_queue = deque()
 processed_questions = set()
 
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html'), 200
+# ==========Layout das funçoes ==========
+def generate_card(row):
+    return dbc.Card([
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col(str(row['question_id']), md=3, xs=12),
+                dbc.Col(str(row['seller_id']), md=3, xs=12),
+                dbc.Col(str(row['date_created']), md=3, xs=12),
+                dbc.Col(str(row['foi_respondida']), md=3, xs=12),
+            ]),
+            html.Hr(),
+            dbc.Row([
+                dbc.Col(str(row['item_id']), md=6, xs=12),
+                dbc.Col(str(row['itemName']), md=6, xs=12, className='text-center'),
+            ]),
+            html.Hr(),
+            dbc.Col(str(row['item_Description']), md=12),
+            html.Hr(),
+            dbc.Col(str(row['question_text']), md=12),
+            html.Hr(),
+            dbc.Col(str(row['response_json']), md=12),
+            #html.Hr(),
+            #dbc.Col(str(row['foi_respondida']), md=12),
+        ],style={'font-size': '15px', 'heigt':''})
+    ], className='bg-dark text-white mb-3', style={'border': '1px solid white', 'padding': '10px', 'margin': '10px', 'color': 'white'})
 
+def generate_tab_content():
+    return dbc.Card([
+        html.Div([
+            html.H4('Dashboard Kelan Móveis', style={'display': 'inline-block'}),
+            html.Button('Atualizar', id='update-button', style={'align': 'left','width': '10%'}),
+            html.Div(id='cards-container', children=[
+                generate_card(row) for _, row in df.iterrows()
+            ], style={'overflowY': 'scroll', 'height': '38vh', 'padding': '10px'}),
+            html.Div([
+                html.H4('Quantidade de Dados'),
+                html.Div(f'Total de registros: {len(df)}')
+            ])
+        ], style={'padding': '20px'})
+    ], style={'width': '98%'})
+
+# =========  Layout  =========== #
+app.layout = dbc.Container(children=[
+    #dcc.Store(id='dataset', data=df_store),
+    #dcc.Store(id='dataset_fixed', data=df_store),
+
+    # Layout
+    # Row 1
+    dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    dbc.Row([
+                        html.Img(src="assets/img_card1.jpg", height="70px", style={'align':'top'}),
+                        html.Hr()
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            html.Legend("Análise de vendas", style={'font-size':'24px'})
+                        ], sm=8),
+                        dbc.Col([
+                            html.I(className='fa fa-filter', style={'font-size':'300%'})
+                        ],sm=4, align="center")
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2]),
+                            html.Legend("Grupo Kelan LTDA")
+                        ])
+                    ], style={'margin-top':'10px'}),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Button("Atualizar", id="update-button", className="mb-3", style={'width':'100%','font-size':'18px','align':'center'}),
+                        ])
+                    ], style={'margin-top':'10px'}),
+                ])
+            ], style={'align':'left'})
+        ],sm=4, lg=2,),
+        dbc.Col([
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        dbc.Tabs(
+                            [
+                                dbc.Tab(label="Kelan Movéis", tab_id="tab-1_kelan"),
+                                dbc.Tab(label="May_Store", tab_id="tab-2_may"),
+                                dbc.Tab(label="Ozzy Store", tab_id="tab-3_ozzy"),
+                                dbc.Tab(label="Decor Home", tab_id="tab-4_decorhome"),
+                                dbc.Tab(label="5 Conta", tab_id="tab-5")
+                            ],
+                            id="card-tabs",
+                            active_tab="tab-1",
+                        )
+                    ),
+                    dbc.CardBody(
+                            html.P(id="card-content", className="card-text"),
+                            style={
+                                'height': '300px',  # Defina a altura desejada aqui
+                                'overflowY': 'auto',  # Isso permitirá a rolagem vertical quando o conteúdo exceder a altura definida
+                                'overflowX': 'hidden'  # Isso esconderá a rolagem horizontal, mas você pode mudar para 'auto' se quiser que seja visível quando necessário
+                            }
+                        )
+
+                ]
+            )
+        ],style={'align':'center'}),
+    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.CardBody(id="cards-container")
+                        ])
+                    ], style={'margin-top':'10px'}),
+
+
+
+], fluid=True, style={'height': '100%'})
+
+# ======== Callbacks ========== #
+
+###
+@app.callback(
+    Output("cards-container", "children"), [Input("card-tabs", "active_tab")]
+)
+def tab_content(active_tab):
+    return "Conta: {}".format(active_tab)
+
+###
+@app.callback(
+    Output('card-content', 'children'),
+    Input('update-button', 'n_clicks')
+)
+def update_card_content(n):
+    if n is None:
+        raise dash.exceptions.PreventUpdate
+    df = fetch_data()
+    if not df.empty:
+        return [generate_card(row) for _, row in df.iterrows()]
+    else:
+        return [html.Div("Nenhum dado recuperado do banco de dados.")]
+
+# Funções do robo
 def fetch_and_process_data():
     logging.info("Buscando perguntas...")
     url = 'https://testeappi.azurewebsites.net/kelan/info/info'
@@ -182,4 +374,6 @@ loop_thread = threading.Thread(target=loop_function)
 loop_thread.start()
 
 # Inicie o servidor Flask na thread principal
-app.run(debug=False, port=8050, host='172.20.20.37')
+if __name__ == '__main__':
+    app.run_server(debug=False, port=8050, host='172.20.20.37')
+    #app.run(debug=False, port=8050, host='172.20.20.37')

@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'

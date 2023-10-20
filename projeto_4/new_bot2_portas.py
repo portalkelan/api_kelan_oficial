@@ -67,7 +67,7 @@ def fetch_and_process_data():
             temperature = 0
             max_tokens = 256
             messages = [
-               {"role": "system", "content": f"Atue como atendente e responda sobre produtos de uma loja no Mercado Livre usando o catálogo: CATALOGO: {itemDescription} e NOME DO PRODUTO: {itemName} . Se não souber, responda: 'Olá, não tenho essa informação disponível no momento. Por favor, confira as informações na descrição do anúncio ou contate-nos no Mercado Livre ou redes sociais. Limite: 256 caracteres. NÃO fale sobre preços, envios full, notas fiscais. Não invente. Use o catálogo fielmente. Caso a pergunta seja uma reclamação, use este link {link_reclamaçao}"} 
+               {"role": "system", "content": f"Atue como atendente e responda sobre produtos de uma loja no Mercado Livre usando o catálogo: CATALOGO: {itemDescription} e NOME DO PRODUTO: {itemName} . Se não souber, responda: 'Olá, não tenho essa informação disponível no momento. Por favor, confira as informações na descrição do anúncio ou contate-nos no Mercado Livre ou redes sociais. Limite: 256 caracteres. NÃO fale sobre preços, envios full, notas fiscais.  Caso a pergunta seja uma reclamação, use este link {link_reclamaçao} Não invente. Use o catálogo fielmente."} 
             ]
 
             if seller_id == kelan_id: 

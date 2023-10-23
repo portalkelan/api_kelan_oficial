@@ -10,7 +10,7 @@ from flask import Flask, render_template
 import threading
 from collections import deque
 import dash
-from dash import html, dcc, Input, Output, State
+from dash import dcc, html, dash_table, Input, Output, exceptions
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -21,8 +21,8 @@ from dash.exceptions import PreventUpdate
 
 # Configuração do Logging
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[logging.FileHandler('app.log'), logging.StreamHandler()])
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+                    
 logger = logging.getLogger(__name__)
 
 # Configuração da conexão com o banco de dados
@@ -34,9 +34,7 @@ config = {
     'database': 'kelan1'
 }
 
-logging.info("Buscando dados...")
 def fetch_data():
-    logging.info("Dados buscados com sucesso.")
     try:
         connection = mysql.connector.connect(**config)
         if connection.is_connected():
@@ -96,11 +94,35 @@ def count_data_by_seller_id():
             connection.close()
             logging.info("Conexão com o banco de dados fechada.")
 
+def fetch_interactions_data():
+    try:
+        connection = mysql.connector.connect(**config)
+        if connection.is_connected():
+            logging.info("Conexão com o banco de dados estabelecida com sucesso.")
+            query = "SELECT seller_id, date_created FROM chat_db"
+            df = pd.read_sql(query, connection)
+            logging.info(f"{len(df)} registros recuperados do banco de dados.")
+            return df
+        else:
+            logging.error("Falha ao conectar ao banco de dados.")
+            return pd.DataFrame()  # Retorna um DataFrame vazio
+    except mysql.connector.Error as err:
+        logging.error(f"Erro ao conectar ao banco de dados: {err}")
+        return pd.DataFrame()  # Retorna um DataFrame vazio
+    finally:
+        if connection.is_connected():
+            connection.close()
+            logging.info("Conexão com o banco de dados fechada.")
+
+
 # ========= App ============== #
 FONT_AWESOME = ["https://use.fontawesome.com/releases/v5.10.2/css/all.css"]
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.4/dbc.min.css"
 
 df_counts = count_data_by_seller_id()
+
+# Atribuir um ID ao DataFrame
+df_counts['id'] = range(1, len(df_counts) + 1)
 print(df_counts)
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY, dbc_css])
@@ -118,7 +140,7 @@ url_theme2 = dbc.themes.VAPOR
 tab_card = {'height':'100%'}
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
@@ -149,7 +171,7 @@ def generate_card(row):
             dbc.Col(str(row['response_json']), md=12),
             #html.Hr(),
             #dbc.Col(str(row['foi_respondida']), md=12),
-        ],style={'font-size': '15px', 'heigt':''})
+        ],style={'font-size': '15px', 'heigt':'100%'})
     ], className='bg-dark text-white mb-3', style={'border': '1px solid white', 'padding': '10px', 'margin': '10px', 'color': 'white'})
 
 def generate_tab_content():
@@ -169,7 +191,7 @@ def generate_tab_content():
 
 # =========  Layout  =========== #
 app.layout = dbc.Container(children=[
-    # Layout
+ # Layout
     # Row 1
     dbc.Row([
         dbc.Col([
@@ -225,6 +247,7 @@ app.layout = dbc.Container(children=[
                                 'overflowX': 'hidden'  # Isso esconderá a rolagem horizontal, mas você pode mudar para 'auto' se quiser que seja visível quando necessário
                             }
                         )
+
                     ]
                 )
             ],style={'align':'center'}),
@@ -232,14 +255,17 @@ app.layout = dbc.Container(children=[
         
         dbc.Row([
             dbc.Col([
-            
-            ]),
-            dbc.Col([
                 
+            ], style={'margin-top':'10px'}),
+            dbc.Col([
+                dbc.Card([
+                    dcc.Graph(id='static-counts')
+                ], style={'margin-top':'10px'})
             ])
-        ]) 
+        ], style={'margin-top':'10px'}) 
     
     ], fluid=True, style={'height': '100%'})
+
 
 # ======== Callbacks ========== #
 
@@ -249,6 +275,7 @@ app.layout = dbc.Container(children=[
 )
 def update_tab_content(active_tab):
     df = pd.DataFrame()  # Inicialize df com um DataFrame vazio como padrão
+    # Aqui, você pode definir lógica específica para cada aba, se necessário.
     # Por exemplo, se diferentes abas precisam buscar dados de diferentes tabelas.
     if active_tab == "tab-1_kelan":
         df = fetch_data_by_seller_id("65131481")
@@ -265,6 +292,43 @@ def update_tab_content(active_tab):
         return [generate_card(row) for _, row in df.iterrows()]
     else:
         return [html.Div("Nenhum dado recuperado do banco de dados.")]
+    
+###
+@app.callback(
+    Output('static-counts', 'figure'),
+    Input('update-button', 'n_clicks')
+)
+def update_graph(n):
+    # Gerar um DataFrame usando a função count_data_by_seller_id
+    #df_counts = count_data_by_seller_id()
+    df_interactions = fetch_interactions_data()
+    
+    df_grouped = df_interactions.groupby(['seller_id', 'date_created']).size().reset_index(name='counts')
+    df_pivot = df_grouped.pivot(index='date_created', columns='seller_id', values='counts').fillna(0)
+
+    fig = px.line(df_pivot, 
+                  x=df_pivot.index, 
+                  y=df_pivot.columns, 
+                  title='Interações por Data para Cada Seller ID')
+    fig = px.line(df_pivot, 
+              x=df_pivot.index, 
+              y=df_pivot.columns, 
+              title='Interações por Data para Cada Seller ID')
+
+    # Ajustar o tamanho do gráfico
+    fig.update_layout(height=400, width=600)
+
+    # Melhorar a estilização
+    fig.update_traces(mode='lines+markers')  # Adiciona marcadores aos pontos de dados
+
+    # Adicionar tooltips
+    fig.update_traces(hoverinfo='x+y+name')  # Mostra x, y e nome (seller_id) no tooltip
+
+    # Legendas interativas já são padrão em plotly
+
+    # Para permitir zoom e pan, certifique-se de que o modo de arrasto esteja definido como 'zoom' (que é o padrão)
+
+    return fig
 
 # Funções do robo
 def fetch_and_process_data():
@@ -436,7 +500,10 @@ loop_thread.start()
 # Run server
 if __name__ == '__main__':
     logging.info("Iniciando o aplicativo...")
+    # Run server
+if __name__ == '__main__':
     app.run_server(debug=True,threaded=True,port=8050, host='172.20.20.37')
+
 
 ### Alertas
 #dbc.Alert("This is a primary alert", color="primary"),

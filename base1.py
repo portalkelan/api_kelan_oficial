@@ -9,7 +9,6 @@ import mysql.connector
 from sqlalchemy import create_engine
 import logging
 from dash.exceptions import PreventUpdate
-from collections import deque
 import collections
 
 logging.basicConfig(level=logging.INFO,
@@ -85,12 +84,35 @@ def count_data_by_seller_id():
             connection.close()
             logging.info("Conexão com o banco de dados fechada.")
 
+def fetch_interactions_data():
+    try:
+        connection = mysql.connector.connect(**config)
+        if connection.is_connected():
+            logging.info("Conexão com o banco de dados estabelecida com sucesso.")
+            query = "SELECT seller_id, date_created FROM chat_db"
+            df = pd.read_sql(query, connection)
+            logging.info(f"{len(df)} registros recuperados do banco de dados.")
+            return df
+        else:
+            logging.error("Falha ao conectar ao banco de dados.")
+            return pd.DataFrame()  # Retorna um DataFrame vazio
+    except mysql.connector.Error as err:
+        logging.error(f"Erro ao conectar ao banco de dados: {err}")
+        return pd.DataFrame()  # Retorna um DataFrame vazio
+    finally:
+        if connection.is_connected():
+            connection.close()
+            logging.info("Conexão com o banco de dados fechada.")
+
 
 # ========= App ============== #
 FONT_AWESOME = ["https://use.fontawesome.com/releases/v5.10.2/css/all.css"]
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.4/dbc.min.css"
 
 df_counts = count_data_by_seller_id()
+
+# Atribuir um ID ao DataFrame
+df_counts['id'] = range(1, len(df_counts) + 1)
 print(df_counts)
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY, dbc_css])
@@ -170,6 +192,11 @@ def generate_tab_content():
 
 # =========  Layout  =========== #
 app.layout = dbc.Container(children=[
+    #dcc.Interval(
+    #    id='interval-component',
+    #    interval=5*1000,  # em milissegundos, então 5*1000 = 5 segundos
+    #    n_intervals=0
+    #),
     #dcc.Store(id='dataset', data=df_store),
     #dcc.Store(id='dataset_fixed', data=df_store),
 
@@ -237,10 +264,12 @@ app.layout = dbc.Container(children=[
         
         dbc.Row([
             dbc.Col([
-            
+                
             ]),
             dbc.Col([
-                
+                dbc.Card([
+                    dcc.Graph(id='static-counts')
+                ])
             ])
         ]) 
     
@@ -272,6 +301,44 @@ def update_tab_content(active_tab):
         return [generate_card(row) for _, row in df.iterrows()]
     else:
         return [html.Div("Nenhum dado recuperado do banco de dados.")]
+    
+###
+@app.callback(
+    Output('static-counts', 'figure'),
+    Input('update-button', 'n_clicks')
+)
+def update_graph(n):
+    # Gerar um DataFrame usando a função count_data_by_seller_id
+    #df_counts = count_data_by_seller_id()
+    df_interactions = fetch_interactions_data()
+    
+    df_grouped = df_interactions.groupby(['seller_id', 'date_created']).size().reset_index(name='counts')
+    df_pivot = df_grouped.pivot(index='date_created', columns='seller_id', values='counts').fillna(0)
+
+    fig = px.line(df_pivot, 
+                  x=df_pivot.index, 
+                  y=df_pivot.columns, 
+                  title='Interações por Data para Cada Seller ID')
+    fig = px.line(df_pivot, 
+              x=df_pivot.index, 
+              y=df_pivot.columns, 
+              title='Interações por Data para Cada Seller ID')
+
+    # Ajustar o tamanho do gráfico
+    fig.update_layout(height=600, width=1000)
+
+    # Melhorar a estilização
+    fig.update_traces(mode='lines+markers')  # Adiciona marcadores aos pontos de dados
+
+    # Adicionar tooltips
+    fig.update_traces(hoverinfo='x+y+name')  # Mostra x, y e nome (seller_id) no tooltip
+
+    # Legendas interativas já são padrão em plotly
+
+    # Para permitir zoom e pan, certifique-se de que o modo de arrasto esteja definido como 'zoom' (que é o padrão)
+
+    return fig
+
 
 # Run server
 if __name__ == '__main__':

@@ -140,7 +140,7 @@ url_theme2 = dbc.themes.VAPOR
 tab_card = {'height':'100%'}
 
 ### Chave da API Open_AI
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Link de Reclamação
 link_reclamaçao = 'myaccount.mercadolivre.com.br/my_purchases/list'
